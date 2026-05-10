@@ -1,4 +1,4 @@
-﻿package com.project.fondea.exception;
+package com.project.fondea.exception;
 
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PledgeAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handlePledgeAlreadyExists(PledgeAlreadyExistsException ex) {
         return buildResponse(HttpStatus.CONFLICT, "Pledge already exists", ex.getMessage());
+    }
+
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public ResponseEntity<Map<String, Object>> incorrectPassword(IncorrectPasswordException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Incorrect password", ex.getMessage());
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> userAlreadyExists(UserAlreadyExistsException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "User already exists", ex.getMessage());
     }
 
     @ExceptionHandler(DuplicatePaymentException.class)
@@ -94,7 +104,6 @@ public class GlobalExceptionHandler {
                                                               String error,
                                                               String message) {
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", status.value());
         body.put("error", error);
         body.put("message", message);

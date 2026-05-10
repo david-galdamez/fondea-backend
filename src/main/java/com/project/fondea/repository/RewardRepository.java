@@ -1,4 +1,4 @@
-﻿package com.project.fondea.repository;
+package com.project.fondea.repository;
 
 import com.project.fondea.model.Reward;
 import org.springframework.data.jpa.repository.JpaRepository;

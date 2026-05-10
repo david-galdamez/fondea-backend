@@ -1,4 +1,4 @@
-﻿package com.project.fondea.exception;
+package com.project.fondea.exception;
 
 import java.math.BigDecimal;
 
