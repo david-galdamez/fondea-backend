@@ -1,4 +1,4 @@
-﻿package com.project.fondea.exception;
+package com.project.fondea.exception;
 
 public class UnauthorizedActionException extends RuntimeException {
     public UnauthorizedActionException(String message) {

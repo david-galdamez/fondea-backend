@@ -1,4 +1,4 @@
-﻿package com.project.fondea.exception;
+package com.project.fondea.exception;
 
 public class DuplicatePaymentException extends RuntimeException {
 
