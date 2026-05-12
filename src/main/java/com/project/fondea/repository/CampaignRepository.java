@@ -35,5 +35,4 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Pledge p " +
             "WHERE p.campaign.id = :campaignId AND p.status = 'PENDING'")
-    BigDecimal sumPendingPledgesByCampaignId(@Param("campaignId") Long campaignId);
-}
+    BigDecimal sumPendingPledgesByCampaignId(@Param("campaignId") UUID campaignId);}
