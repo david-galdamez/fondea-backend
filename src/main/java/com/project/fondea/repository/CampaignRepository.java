@@ -2,6 +2,7 @@ package com.project.fondea.repository;
 
 import com.project.fondea.model.Campaign;
 import com.project.fondea.model.enums.CampaignStatus;
+import com.project.fondea.model.enums.PledgeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,10 +11,12 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
+    Optional<Campaign> findByIdAndStatus(UUID campaignId, CampaignStatus status);
     List<Campaign> findByCreatorId(UUID creatorId);
     List<Campaign> findByCreatorIdAndStatus(UUID creatorId, CampaignStatus status);
 
@@ -35,6 +38,9 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
     List<Campaign> searchByKeyword(@Param("keyword") String keyword);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Pledge p " +
-            "WHERE p.campaign.id = :campaignId AND p.status = 'PENDING'")
-    BigDecimal sumPendingPledgesByCampaignId(@Param("campaignId") Long campaignId);
+            "WHERE p.campaign.id = :campaignId AND p.status = :status")
+    BigDecimal sumPendingPledgesByCampaignId(@Param("campaignId") UUID campaignId, @Param("status")PledgeStatus status);
+
+    @Query("SELECT COUNT(p) FROM Pledge p WHERE p.campaign.id = :campaignId")
+    int countPledgesByCampaignId(@Param("campaignId") UUID campaignId);
 }

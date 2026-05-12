@@ -14,13 +14,4 @@ public class ModelToDtoMapper {
                 .role(user.getRole())
                 .build();
     }
-
-    public static CampaignDto toCampaignDto(Campaign campaign) {
-        return CampaignDto.builder()
-                .id(campaign.getId())
-                .title(campaign.getTitle())
-                .description(campaign.getDescription())
-                .goalAmount(campaign.getGoalAmount())
-                .build();
-    }
 }
