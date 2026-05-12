@@ -55,6 +55,7 @@ public class Campaign {
     @JoinColumn(name = "location_id")
     private Location location;
 
+    @Builder.Default
     @Column(nullable = false)
     private Double featuredScore = 0.0;
 

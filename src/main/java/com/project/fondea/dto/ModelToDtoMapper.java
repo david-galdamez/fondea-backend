@@ -1,6 +1,8 @@
 package com.project.fondea.dto;
 
+import com.project.fondea.dto.campaign.CampaignDto;
 import com.project.fondea.dto.user.UserDto;
+import com.project.fondea.model.Campaign;
 import com.project.fondea.model.User;
 
 public class ModelToDtoMapper {

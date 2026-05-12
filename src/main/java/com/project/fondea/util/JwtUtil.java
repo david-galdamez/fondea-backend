@@ -42,8 +42,4 @@ public class JwtUtil {
     public String extractUserId(String token) {
         return validateToken(token).getClaim("id").asString();
     }
-
-    public String extractRole(String token) {
-        return validateToken(token).getClaim("role").asString();
-    }
 }
