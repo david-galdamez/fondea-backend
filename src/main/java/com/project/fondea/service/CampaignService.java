@@ -29,18 +29,18 @@ public class CampaignService {
         var creator = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        var category = categoryRepository.findById(registerRequest.getCategoryId())
+        var category = categoryRepository.findById(registerRequest.categoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Categoria no encontrada"));
 
-        var location = locationRepository.findById(registerRequest.getLocationId())
+        var location = locationRepository.findById(registerRequest.locationId())
                 .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada"));
 
         var campaign = Campaign.builder()
-                .title(registerRequest.getTitle())
-                .description(registerRequest.getDescription())
-                .goalAmount(registerRequest.getGoalAmount())
-                .isFlexibleGoal(registerRequest.getIsFlexibleGoal())
-                .deadline(registerRequest.getDeadline())
+                .title(registerRequest.title())
+                .description(registerRequest.description())
+                .goalAmount(registerRequest.goalAmount())
+                .isFlexibleGoal(registerRequest.isFlexibleGoal())
+                .deadline(registerRequest.deadline())
                 .status(CampaignStatus.DRAFT)
                 .creator(creator)
                 .category(category)

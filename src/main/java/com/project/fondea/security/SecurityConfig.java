@@ -28,26 +28,40 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+
+                        // ── Autenticación ────────────────────────────────────────
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/admin/register").permitAll()
+
+                        // ── Admin ────────────────────────────────────────────────
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+
+                        // ── Creador — rutas específicas ANTES del wildcard público
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/mine").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/drafts").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/submit").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/updates").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/rewards").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/rewards/manage").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/rewards/*").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/withdrawals").hasRole("CREATOR")
 
-                        .requestMatchers(HttpMethod.POST, "/api/admin/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        // ── Sponsor ──────────────────────────────────────────────
+                        .requestMatchers(HttpMethod.POST, "/api/pledges").hasRole("SPONSOR")
+                        .requestMatchers(HttpMethod.GET, "/api/pledges/mine").hasRole("SPONSOR")
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/**").hasRole("SPONSOR")
+
+                        // ── Públicos — wildcards al final ────────────────────────
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/locations/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/faqs").permitAll()
-
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/locations/**").hasRole("ADMIN")
-                        .requestMatchers("/api/categories/**").hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.POST, "/api/campaigns").hasRole("CREATOR")
-                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/updates").hasRole("CREATOR")
-                        .requestMatchers(HttpMethod.POST, "/api/withdrawals").hasRole("CREATOR")
-
-                        .requestMatchers(HttpMethod.POST, "/api/pledges").hasRole("SPONSOR")
-                        .requestMatchers(HttpMethod.GET, "/api/certificates/**").hasRole("SPONSOR")
 
                         .anyRequest().authenticated()
                 )

@@ -9,27 +9,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-public class RegisterCampaignRequest {
-    @NotBlank(message = "El titlo es requerido")
-    private String title;
+public record RegisterCampaignRequest (
+    @NotBlank(message = "El titlo es necesario")
+    String title,
 
-    @NotBlank(message = "La descripción es requerido")
-    private String description;
+    @NotBlank(message = "La descripción es necesario")
+    String description,
 
-    @NotNull(message = "La meta es requerida")
-    private BigDecimal goalAmount;
+    BigDecimal goalAmount,
 
-    @NotNull(message = "El campo es requerido")
-    private Boolean isFlexibleGoal;
+    @NotNull(message = "El campo es necesario")
+    Boolean isFlexibleGoal,
 
-    @NotNull(message = "La fecha limite es requerida")
+    @NotNull(message = "La fecha limite es necesaria")
     @Future(message = "La fecha limite debe ser en el futuro")
-    private LocalDate deadline;
+    LocalDate deadline,
 
-    @NotNull(message = "El id de la categoria es requerida")
-    private UUID categoryId;
+    @NotNull(message = "El id de la categoria es necesario")
+    UUID categoryId,
 
-    @NotNull(message = "El id de la ubicación es requerida")
-    private UUID locationId;
-}
+    @NotNull(message = "El id de la ubicación es necesario")
+    UUID locationId
+){}
