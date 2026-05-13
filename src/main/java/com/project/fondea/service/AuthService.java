@@ -26,6 +26,7 @@ public class AuthService {
     private final CreatorProfileRepository creatorProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
     public LoginResponse register(RegisterUser request, Role role) {
         if(userRepository.existsByEmail(request.email())) {

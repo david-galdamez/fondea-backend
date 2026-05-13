@@ -24,6 +24,7 @@ public class CampaignService {
     private final LocationRepository locationRepository;
     private final RewardRepository rewardRepository;
     private final CampaignFaqRepository faqRepository;
+    private final EmailService emailService;
 
     public CampaignCreatedDto create(UUID userId, RegisterCampaignRequest registerRequest) {
         var creator = userRepository.findById(userId)
@@ -157,6 +158,9 @@ public class CampaignService {
         }
 
         campaign.setStatus(CampaignStatus.ACTIVE);
+
+        emailService.sendCampaignApproved(campaign.getCreator(), campaign);
+
         return CampaignMapper.toStatus(campaignRepository.save(campaign));
     }
 
@@ -169,6 +173,9 @@ public class CampaignService {
         }
 
         campaign.setStatus(CampaignStatus.DRAFT);
+
+        emailService.sendCampaignRejected(campaign.getCreator(), campaign);
+
         return CampaignMapper.toStatus(campaignRepository.save(campaign));
     }
 }

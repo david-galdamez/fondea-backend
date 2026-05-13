@@ -23,6 +23,6 @@ public interface PledgeRepository extends JpaRepository<Pledge, UUID> {
     boolean existsBySponsorIdAndCampaignId(UUID sponsorId, UUID campaignId);
 
     @Query("SELECT DISTINCT p.sponsor FROM Pledge p " +
-            "WHERE p.campaign.id = :campaignId AND p.status = 'PENDING'")
-    List<User> findSponsorsByCampaignId(@Param("campaignId") UUID campaignId);
+            "WHERE p.campaign.id = :campaignId AND p.status = :status")
+    List<User> findSponsorsByCampaignIdAndStatus(@Param("campaignId") UUID campaignId, @Param("status") PledgeStatus status);
 }
