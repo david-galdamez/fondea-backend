@@ -13,6 +13,7 @@ import java.util.UUID;
 
 @Repository
 public interface PledgeRepository extends JpaRepository<Pledge, UUID> {
+    int countByRewardId(UUID rewardId);
     List<Pledge> findBySponsorId(UUID sponsorId);
 
     List<Pledge> findByCampaignId(UUID campaignId);
