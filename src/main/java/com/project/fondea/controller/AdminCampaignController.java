@@ -1,6 +1,5 @@
 package com.project.fondea.controller;
 
-import com.project.fondea.dto.campaign.CampaignDto;
 import com.project.fondea.dto.campaign.CampaignReviewDto;
 import com.project.fondea.dto.campaign.CampaignStatusDto;
 import com.project.fondea.service.CampaignService;
