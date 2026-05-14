@@ -121,12 +121,4 @@ public class CampaignMapper {
                 campaign.getCreatedAt()
         );
     }
-
-    public static FaqDto toFaq(CampaignFaq faq) {
-        return new FaqDto(
-                faq.getId(),
-                faq.getQuestion(),
-                faq.getAnswer()
-        );
-    }
 }

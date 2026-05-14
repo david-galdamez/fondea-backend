@@ -1,10 +1,7 @@
 package com.project.fondea.service;
 
 import com.project.fondea.dto.rewards.*;
-import com.project.fondea.exception.CampaignNotActiveException;
-import com.project.fondea.exception.EntityNotFoundException;
-import com.project.fondea.exception.RewardOutOfStockException;
-import com.project.fondea.exception.UnauthorizedActionException;
+import com.project.fondea.exception.*;
 import com.project.fondea.model.Reward;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.repository.CampaignRepository;
@@ -113,11 +110,16 @@ public class RewardsService {
 
         int pledgeCount = pledgeRepository.countByRewardId(rewardId);
         if(pledgeCount > 0) {
-            throw new UnauthorizedActionException(
+            throw new BusinessRuleException(
                     "No puedes eliminar una recompensa que ya tiene " + pledgeCount + " patrocinadores"
             );
         }
 
         rewardRepository.delete(reward);
+    }
+
+    public Reward getById(UUID rewardId) {
+        return rewardRepository.findById(rewardId)
+                .orElseThrow(() -> new EntityNotFoundException("Recompensa no encontrada"));
     }
 }

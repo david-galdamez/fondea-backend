@@ -9,5 +9,12 @@ import java.util.UUID;
 
 @Repository
 public interface CampaignFaqRepository extends JpaRepository<CampaignFaq, UUID> {
-    List<CampaignFaq> findByCampaignId(UUID campaignId);
+    // Público — solo las respondidas
+    List<CampaignFaq> findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(UUID campaignId);
+
+    // Creador — todas
+    List<CampaignFaq> findByCampaignIdOrderByAskedAtDesc(UUID campaignId);
+
+    // Sin responder (para que el creador vea qué le falta)
+    List<CampaignFaq> findByCampaignIdAndAnswerIsNull(UUID campaignId);
 }

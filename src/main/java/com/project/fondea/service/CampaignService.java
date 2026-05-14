@@ -1,6 +1,7 @@
 package com.project.fondea.service;
 
 import com.project.fondea.dto.campaign.*;
+import com.project.fondea.dto.faq.FaqMapper;
 import com.project.fondea.dto.rewards.RewardsMapper;
 import com.project.fondea.exception.CampaignAlreadyReviewedException;
 import com.project.fondea.exception.EntityNotFoundException;
@@ -63,9 +64,9 @@ public class CampaignService {
                 .map(RewardsMapper::toRewardsSummary)
                 .toList();
 
-        var faqs = faqRepository.findByCampaignId(campaignId)
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
                 .stream()
-                .map(CampaignMapper::toFaq)
+                .map(FaqMapper::toDto)
                 .toList();
 
         return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
