@@ -3,6 +3,7 @@ package com.project.fondea.service;
 import com.project.fondea.dto.faq.*;
 import com.project.fondea.exception.CampaignNotActiveException;
 import com.project.fondea.exception.EntityNotFoundException;
+import com.project.fondea.exception.ResourceAlreadyExistsException;
 import com.project.fondea.exception.UnauthorizedActionException;
 import com.project.fondea.model.CampaignFaq;
 import com.project.fondea.model.enums.CampaignStatus;
@@ -55,7 +56,7 @@ public class CampaignFaqService {
         }
 
         if (faq.getAnswer() != null) {
-            throw new UnauthorizedActionException("Esta pregunta ya fue respondida");
+            throw new ResourceAlreadyExistsException("Esta pregunta ya fue respondida");
         }
 
         faq.setAnswer(request.answer());
