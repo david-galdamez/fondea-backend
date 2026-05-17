@@ -8,11 +8,12 @@ import com.project.fondea.exception.*;
 import com.project.fondea.model.Campaign;
 import com.project.fondea.model.Pledge;
 import com.project.fondea.model.Reward;
-import com.project.fondea.model.User;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.repository.CampaignRepository;
 import com.project.fondea.repository.PledgeRepository;
+import com.project.fondea.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,10 +28,12 @@ public class PledgeService {
     private final PledgeRepository pledgeRepository;
     private final CampaignRepository campaignRepository;
     private final RewardsService rewardsService;
-    //private final NotificationService notificationService;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
     private static final BigDecimal NEAR_GOAL_THRESHOLD = new BigDecimal("0.80");
 
+    @Transactional
     public PledgeCreatedDto create(UUID sponsorId, CreatePledgeRequest request) {
         var campaign = campaignRepository.findById(request.campaignId())
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
@@ -40,7 +43,7 @@ public class PledgeService {
         }
 
         if (pledgeRepository.existsBySponsorIdAndCampaignId(sponsorId, request.campaignId())) {
-            throw new PledgeAlreadyExistsException(sponsorId, request.campaignId());
+            throw new ResourceAlreadyExistsException("Ya realizaste un pledge de esta campaña");
         }
 
         Reward reward = null;
@@ -56,8 +59,8 @@ public class PledgeService {
             rewardsService.decreaseStock(request.rewardId());
         }
 
-        var sponsor = new User();
-        sponsor.setId(sponsorId);
+        var sponsor = userRepository.findById(sponsorId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         var pledge = Pledge.builder()
                 .sponsor(sponsor)
@@ -92,7 +95,12 @@ public class PledgeService {
         var threshold = campaign.getGoalAmount().multiply(NEAR_GOAL_THRESHOLD);
 
         if (totalPledged.compareTo(threshold) >= 0) {
-            //notificationService.notifyNearGoal(campaign);
+            var sponsors = pledgeRepository.findSponsorsByCampaignIdAndStatus(
+                    campaign.getId(), PledgeStatus.PENDING
+            );
+
+            sponsors.forEach(s ->
+                        emailService.sendNearGoalNotification(s, campaign));
         }
     }
 }

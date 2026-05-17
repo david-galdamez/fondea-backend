@@ -13,6 +13,7 @@ import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.repository.CampaignRepository;
 import com.project.fondea.repository.CampaignUpdateRepository;
 import com.project.fondea.repository.PledgeRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class CampaignUpdateService {
     private final PledgeRepository pledgeRepository;
     private final EmailService emailService;
 
+    @Transactional
     public CampaignUpdateCreatedDto publish(UUID creatorId, UUID campaignId, CreateUpdateRequest request) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));

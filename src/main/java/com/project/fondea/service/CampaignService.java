@@ -159,10 +159,11 @@ public class CampaignService {
         }
 
         campaign.setStatus(CampaignStatus.ACTIVE);
+        var saved = campaignRepository.save(campaign);
 
         emailService.sendCampaignApproved(campaign.getCreator(), campaign);
 
-        return CampaignMapper.toStatus(campaignRepository.save(campaign));
+        return CampaignMapper.toStatus(saved);
     }
 
     public CampaignStatusDto reject(UUID campaignId) {
@@ -174,9 +175,10 @@ public class CampaignService {
         }
 
         campaign.setStatus(CampaignStatus.DRAFT);
+        var saved = campaignRepository.save(campaign);
 
         emailService.sendCampaignRejected(campaign.getCreator(), campaign);
 
-        return CampaignMapper.toStatus(campaignRepository.save(campaign));
+        return CampaignMapper.toStatus(saved);
     }
 }
