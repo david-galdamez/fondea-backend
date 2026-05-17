@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/campaigns/*/rewards").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/*/rewards/manage").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/rewards/*").hasRole("CREATOR")
-                        .requestMatchers(HttpMethod.POST, "/api/withdrawals").hasRole("CREATOR")
+                        .requestMatchers( "/api/withdrawals/*").hasRole("CREATOR")
 
                         // ── Sponsor ──────────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/pledges").hasRole("SPONSOR")

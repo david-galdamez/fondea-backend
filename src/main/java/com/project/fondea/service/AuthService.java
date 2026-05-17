@@ -13,6 +13,7 @@ import com.project.fondea.model.enums.Role;
 import com.project.fondea.repository.CreatorProfileRepository;
 import com.project.fondea.repository.UserRepository;
 import com.project.fondea.util.JwtUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
 
+    @Transactional
     public LoginResponse register(RegisterUser request, Role role) {
         if(userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException(request.email());
