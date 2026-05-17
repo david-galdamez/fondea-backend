@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,28 +24,48 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Públicos: registro, login, ver campañas
+
+                        // ── Autenticación ────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/campaigns/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/faqs").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/admin/register").permitAll()
 
-                        // Solo ADMIN
+                        // ── Admin ────────────────────────────────────────────────
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
-                        // Solo CREATOR
+                        // ── Creador — rutas específicas ANTES del wildcard público
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/mine").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/drafts").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/campaigns").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/submit").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/campaigns/*/updates").hasRole("CREATOR")
-                        .requestMatchers(HttpMethod.POST, "/api/withdrawals").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/faqs/manage").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/campaigns/*/faqs").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/faqs").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns/*/rewards").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/rewards/manage").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/rewards/*").hasRole("CREATOR")
+                        .requestMatchers( "/api/withdrawals/*").hasRole("CREATOR")
 
-                        // Solo SPONSOR
+                        // ── Sponsor ──────────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/pledges").hasRole("SPONSOR")
+                        .requestMatchers(HttpMethod.GET, "/api/pledges/mine").hasRole("SPONSOR")
                         .requestMatchers(HttpMethod.GET, "/api/certificates/**").hasRole("SPONSOR")
 
-                        // Todo lo demás requiere estar autenticado
+                        // ── Públicos — wildcards al final ────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/locations/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

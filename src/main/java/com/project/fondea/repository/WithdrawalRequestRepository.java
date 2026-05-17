@@ -21,4 +21,5 @@ public interface WithdrawalRequestRepository extends JpaRepository<WithdrawalReq
             "WHERE w.creator.id = :creatorId " +
             "AND w.status = 'PAID' " +
             "AND CAST(w.paidAt AS date) = CURRENT_DATE")
-    BigDecimal sumWithdrawnTodayByCreatorId(@Param("creatorId") UUID creatorId);}
+    BigDecimal sumWithdrawnTodayByCreatorId(@Param("creatorId") UUID creatorId);
+}

@@ -25,12 +25,18 @@ public class CampaignFaq {
     @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
-    @Column(nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "asked_by", nullable = false)
+    private User askedBy;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String question;
 
     @Column(columnDefinition = "TEXT")
     private String answer;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private LocalDateTime askedAt;
+
+    private LocalDateTime answeredAt;
 }

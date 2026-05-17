@@ -52,7 +52,17 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, "Campaign already reviewed", ex.getMessage());
     }
 
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyExists(ResourceAlreadyExistsException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Already exists", ex.getMessage());
+    }
+
     // ─── 422 Reglas de negocio ───────────────────────────────
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<Map<String, Object>> handleBusinessRule(BusinessRuleException ex) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Business rule violation", ex.getMessage());
+    }
+
     @ExceptionHandler(CampaignNotActiveException.class)
     public ResponseEntity<Map<String, Object>> handleCampaignNotActive(CampaignNotActiveException ex) {
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Campaign not active", ex.getMessage());

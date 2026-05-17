@@ -4,7 +4,6 @@ import com.project.fondea.dto.ModelToDtoMapper;
 import com.project.fondea.dto.auth.LoginRequest;
 import com.project.fondea.dto.auth.LoginResponse;
 import com.project.fondea.dto.auth.RegisterUser;
-import com.project.fondea.dto.user.UserDto;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.IncorrectPasswordException;
 import com.project.fondea.exception.UserAlreadyExistsException;
@@ -14,6 +13,7 @@ import com.project.fondea.model.enums.Role;
 import com.project.fondea.repository.CreatorProfileRepository;
 import com.project.fondea.repository.UserRepository;
 import com.project.fondea.util.JwtUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,16 +27,18 @@ public class AuthService {
     private final CreatorProfileRepository creatorProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
+    @Transactional
     public LoginResponse register(RegisterUser request, Role role) {
-        if(userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException(request.getEmail());
+        if(userRepository.existsByEmail(request.email())) {
+            throw new UserAlreadyExistsException(request.email());
         }
 
         var user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .name(request.name())
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
                 .isVerified(false)
                 .build();
@@ -60,12 +62,12 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest loginRequest) {
 
-        var user = userRepository.findByEmail(loginRequest.getEmail());
+        var user = userRepository.findByEmail(loginRequest.email());
         if(user.isEmpty()) {
             throw new EntityNotFoundException("El correo es invalido o no existe");
         }
 
-        if(!passwordEncoder.matches(loginRequest.getPassword(), user.get().getPasswordHash())) {
+        if(!passwordEncoder.matches(loginRequest.password(), user.get().getPasswordHash())) {
             throw new IncorrectPasswordException("La contraseña es incorrecta");
         }
 
