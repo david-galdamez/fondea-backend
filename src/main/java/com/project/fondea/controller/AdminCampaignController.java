@@ -12,15 +12,16 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/campaign")
+@RequestMapping("/api/admin/campaigns")
 @RequiredArgsConstructor
 public class AdminCampaignController {
+
     private final CampaignService campaignService;
 
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<CampaignReviewDto>>> getPending() {
         var campaigns = campaignService.findPendingReview();
-        return ResponseEntity.ok(ApiResponse.ok(campaigns, ""));
+        return ResponseEntity.ok(ApiResponse.ok(campaigns, "Campañas pendientes obtenidas correctamente"));
     }
 
     @PostMapping("/{id}/approve")
