@@ -6,6 +6,7 @@ import com.project.fondea.dto.withdrawal.WithdrawalDto;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.WithdrawalService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,21 +25,24 @@ public class WithdrawalController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<WithdrawalCreatedDto>> requestWithdrawal(
-            @Valid @RequestBody CreateWithdrawalRequest request) {
+            @Valid @RequestBody CreateWithdrawalRequest createWithdrawalRequest,
+            HttpServletRequest request) {
 
         var creatorId = authContext.getCurrentUserId();
-        var withdrawal = withdrawalService.requestWithdrawal(creatorId, request);
+        var withdrawal = withdrawalService.requestWithdrawal(creatorId, createWithdrawalRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(withdrawal, "Solicitud de retiro creada exitosamente"));
+                .body(ApiResponse.ok(withdrawal, "Solicitud de retiro creada exitosamente", request.getRequestURI()));
     }
 
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<List<WithdrawalDto>>> getMyWithdrawals() {
+    public ResponseEntity<ApiResponse<List<WithdrawalDto>>> getMyWithdrawals(
+            HttpServletRequest request
+    ) {
 
         var creatorId = authContext.getCurrentUserId();
         var withdrawals = withdrawalService.getMyWithdrawals(creatorId);
 
-        return ResponseEntity.ok(ApiResponse.ok(withdrawals, ""));
+        return ResponseEntity.ok(ApiResponse.ok(withdrawals, "", request.getRequestURI()));
     }
 }
