@@ -1,9 +1,9 @@
 package com.project.fondea.service;
 
-import com.project.fondea.dto.ModelToDtoMapper;
 import com.project.fondea.dto.auth.LoginRequest;
 import com.project.fondea.dto.auth.LoginResponse;
 import com.project.fondea.dto.auth.RegisterUser;
+import com.project.fondea.dto.user.UserMapper;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.IncorrectPasswordException;
 import com.project.fondea.exception.UserAlreadyExistsException;
@@ -55,7 +55,7 @@ public class AuthService {
             creatorProfileRepository.save(profile);
         }
 
-        var userDto = ModelToDtoMapper.toUserDto(user);
+        var userDto = UserMapper.toUserDto(user);
 
         return new LoginResponse(jwtUtil.generateToken(userDto));
     }
@@ -71,7 +71,7 @@ public class AuthService {
             throw new IncorrectPasswordException("La contraseña es incorrecta");
         }
 
-        var userDto = ModelToDtoMapper.toUserDto(user.get());
+        var userDto = UserMapper.toUserDto(user.get());
 
         return new LoginResponse(jwtUtil.generateToken(userDto));
     }

@@ -4,6 +4,7 @@ import com.project.fondea.dto.category.RegisterCategory;
 import com.project.fondea.model.Category;
 import com.project.fondea.service.CategoryService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,16 +20,16 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Category>> create(@RequestBody RegisterCategory register) {
+    public ResponseEntity<ApiResponse<Category>> create(@RequestBody RegisterCategory register, HttpServletRequest request) {
         var category = categoryService.register(register);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(category, "Categoria creada con exito"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(category, "Categoria creada con exito", request.getRequestURI()));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Category>>> get() {
+    public ResponseEntity<ApiResponse<List<Category>>> get(HttpServletRequest request) {
         var category = categoryService.getCategories();
 
-        return ResponseEntity.ok(ApiResponse.ok(category, "Categorias obtenidas con exito"));
+        return ResponseEntity.ok(ApiResponse.ok(category, "Categorias obtenidas con exito", request.getRequestURI()));
     }
 }

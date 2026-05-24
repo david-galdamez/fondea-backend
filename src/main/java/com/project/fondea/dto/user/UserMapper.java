@@ -1,11 +1,8 @@
-package com.project.fondea.dto;
+package com.project.fondea.dto.user;
 
-import com.project.fondea.dto.campaign.CampaignDto;
-import com.project.fondea.dto.user.UserDto;
-import com.project.fondea.model.Campaign;
 import com.project.fondea.model.User;
 
-public class ModelToDtoMapper {
+public class UserMapper {
     public static UserDto toUserDto(User user) {
         return UserDto.builder()
                 .id(user.getId())

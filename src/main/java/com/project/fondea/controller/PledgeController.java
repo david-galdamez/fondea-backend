@@ -6,6 +6,7 @@ import com.project.fondea.dto.pledge.PledgeCreatedDto;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.PledgeService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,21 +25,22 @@ public class PledgeController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<PledgeCreatedDto>> create(
-            @Valid @RequestBody CreatePledgeRequest request) {
+            @Valid @RequestBody CreatePledgeRequest createRequest,
+            HttpServletRequest request) {
 
         var sponsorId = authContext.getCurrentUserId();
-        var pledge = pledgeService.create(sponsorId, request);
+        var pledge = pledgeService.create(sponsorId, createRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(pledge, "Pledge registrado exitosamente"));
+                .body(ApiResponse.ok(pledge, "Pledge registrado exitosamente", request.getRequestURI()));
     }
 
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<List<MyPledgeDto>>> getMyPledges() {
+    public ResponseEntity<ApiResponse<List<MyPledgeDto>>> getMyPledges(HttpServletRequest request) {
 
         var sponsorId = authContext.getCurrentUserId();
         var pledges = pledgeService.getMyPledges(sponsorId);
 
-        return ResponseEntity.ok(ApiResponse.ok(pledges, ""));
+        return ResponseEntity.ok(ApiResponse.ok(pledges, "", request.getRequestURI()));
     }
 }

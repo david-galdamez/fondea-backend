@@ -6,6 +6,7 @@ import com.project.fondea.dto.campaignUpdate.CreateUpdateRequest;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.CampaignUpdateService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,21 +27,22 @@ public class CampaignUpdateController {
     @PostMapping
     public ResponseEntity<ApiResponse<CampaignUpdateCreatedDto>> publish(
             @PathVariable UUID campaignId,
-            @Valid @RequestBody CreateUpdateRequest request) {
+            @Valid @RequestBody CreateUpdateRequest createRequest, HttpServletRequest request) {
 
         var creatorId = authContext.getCurrentUserId();
-        var update = campaignUpdateService.publish(creatorId, campaignId, request);
+        var update = campaignUpdateService.publish(creatorId, campaignId, createRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(update, "Actualización publicada exitosamente"));
+                .body(ApiResponse.ok(update, "Actualización publicada exitosamente", request.getRequestURI()));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CampaignUpdateDto>>> getUpdates(
-            @PathVariable UUID campaignId) {
+            @PathVariable UUID campaignId,
+            HttpServletRequest request) {
 
         var updates = campaignUpdateService.getByCampaign(campaignId);
 
-        return ResponseEntity.ok(ApiResponse.ok(updates, ""));
+            return ResponseEntity.ok(ApiResponse.ok(updates, "", request.getRequestURI()));
     }
 }
