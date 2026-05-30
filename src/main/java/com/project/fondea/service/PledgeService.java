@@ -42,6 +42,10 @@ public class PledgeService {
             throw new CampaignNotActiveException(request.campaignId());
         }
 
+        if (campaign.getCreator().getId().equals(sponsorId)) {
+            throw new BusinessRuleException("No puedes apoyar tu propia campaña");
+        }
+
         if (pledgeRepository.existsBySponsorIdAndCampaignId(sponsorId, request.campaignId())) {
             throw new ResourceAlreadyExistsException("Ya realizaste un pledge de esta campaña");
         }
