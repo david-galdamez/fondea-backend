@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/pledges").hasRole("SPONSOR")
                         .requestMatchers(HttpMethod.GET, "/api/pledges/mine").hasRole("SPONSOR")
                         .requestMatchers(HttpMethod.GET, "/api/certificates/**").hasRole("SPONSOR")
+                        .requestMatchers(HttpMethod.POST, "/api/fraud-reports").hasRole("SPONSOR")
 
                         // ── Públicos — wildcards al final ────────────────────────
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/**").permitAll()
