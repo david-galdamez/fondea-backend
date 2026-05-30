@@ -17,6 +17,7 @@ import com.project.fondea.repository.UserRepository;
 import com.project.fondea.repository.WithdrawalRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.project.fondea.exception.BusinessRuleException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -87,6 +88,10 @@ public class WithdrawalService {
     public WithdrawalDto approve(UUID withdrawalId) {
         var withdrawal = findById(withdrawalId);
 
+        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
+            throw new BusinessRuleException("Solo se pueden aprobar retiros pendientes");
+        }
+
         withdrawal.setStatus(WithdrawalStatus.APPROVED);
         withdrawal.setPaidAt(LocalDateTime.now());
 
@@ -95,6 +100,10 @@ public class WithdrawalService {
 
     public WithdrawalDto reject(UUID withdrawalId) {
         var withdrawal = findById(withdrawalId);
+
+        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
+            throw new BusinessRuleException("Solo se pueden rechazar retiros pendientes");
+        }
 
         withdrawal.setStatus(WithdrawalStatus.REJECTED);
 
