@@ -4,6 +4,7 @@ import com.project.fondea.dto.campaign.CampaignReviewDto;
 import com.project.fondea.dto.campaign.CampaignStatusDto;
 import com.project.fondea.service.CampaignService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,20 +20,47 @@ public class AdminCampaignController {
     private final CampaignService campaignService;
 
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<CampaignReviewDto>>> getPending() {
+    public ResponseEntity<ApiResponse<List<CampaignReviewDto>>> getPending(HttpServletRequest request) {
         var campaigns = campaignService.findPendingReview();
-        return ResponseEntity.ok(ApiResponse.ok(campaigns, "Campañas pendientes obtenidas correctamente"));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaigns,
+                        "Campañas pendientes obtenidas correctamente",
+                        request.getRequestURI()
+                )
+        );
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> approve(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<CampaignStatusDto>> approve(
+            @PathVariable UUID id,
+            HttpServletRequest request
+    ) {
         var campaign = campaignService.approve(id);
-        return ResponseEntity.ok(ApiResponse.ok(campaign, "Campaña aprobada"));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaign,
+                        "Campaña aprobada",
+                        request.getRequestURI()
+                )
+        );
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> reject(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<CampaignStatusDto>> reject(
+            @PathVariable UUID id,
+            HttpServletRequest request
+    ) {
         var campaign = campaignService.reject(id);
-        return ResponseEntity.ok(ApiResponse.ok(campaign, "Campaña rechazada"));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaign,
+                        "Campaña rechazada",
+                        request.getRequestURI()
+                )
+        );
     }
 }

@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.model.User;
 import com.project.fondea.repository.UserRepository;
+import com.project.fondea.util.ApiResponse;
 import com.project.fondea.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -76,13 +78,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JWTVerificationException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("""
-                    {
-                        "status": 401,
-                        "error": "Unauthorized",
-                        "message": "Token invalido o expirado"
-                    }
-                    """);
+            var errResponse = ApiResponse.error("Token invalido o expirado", request.getRequestURI());
+            var mapper = new ObjectMapper();
+            response.getWriter().write(mapper.writeValueAsString(errResponse));
             return;
         }
 
