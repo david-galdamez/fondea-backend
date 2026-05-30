@@ -13,26 +13,54 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/campaign")
+@RequestMapping("/api/admin/campaigns")
 @RequiredArgsConstructor
 public class AdminCampaignController {
+
     private final CampaignService campaignService;
 
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<CampaignReviewDto>>> getPending(HttpServletRequest request) {
         var campaigns = campaignService.findPendingReview();
-        return ResponseEntity.ok(ApiResponse.ok(campaigns, "", request.getRequestURI()));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaigns,
+                        "Campañas pendientes obtenidas correctamente",
+                        request.getRequestURI()
+                )
+        );
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> approve(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<CampaignStatusDto>> approve(
+            @PathVariable UUID id,
+            HttpServletRequest request
+    ) {
         var campaign = campaignService.approve(id);
-        return ResponseEntity.ok(ApiResponse.ok(campaign, "Campaña aprobada", request.getRequestURI()));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaign,
+                        "Campaña aprobada",
+                        request.getRequestURI()
+                )
+        );
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> reject(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<CampaignStatusDto>> reject(
+            @PathVariable UUID id,
+            HttpServletRequest request
+    ) {
         var campaign = campaignService.reject(id);
-        return ResponseEntity.ok(ApiResponse.ok(campaign, "Campaña rechazada", request.getRequestURI()));
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaign,
+                        "Campaña rechazada",
+                        request.getRequestURI()
+                )
+        );
     }
 }
