@@ -7,6 +7,7 @@ import com.project.fondea.dto.faq.FaqManageDto;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.CampaignFaqService;
 import com.project.fondea.util.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,13 +28,14 @@ public class FaqController {
     @PostMapping
     public ResponseEntity<ApiResponse<FaqDto>> ask(
             @PathVariable UUID campaignId,
-            @Valid @RequestBody AskQuestionRequest request) {
+            @Valid @RequestBody AskQuestionRequest answerRequest,
+            HttpServletRequest request) {
 
         var sponsorId = authContext.getCurrentUserId();
-        var faq = faqService.ask(sponsorId, campaignId, request);
+        var faq = faqService.ask(sponsorId, campaignId, answerRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(faq, "Pregunta enviada exitosamente"));
+                .body(ApiResponse.ok(faq, "Pregunta enviada exitosamente", request.getRequestURI()));
     }
 
     // Creador responde una pregunta
@@ -41,44 +43,48 @@ public class FaqController {
     public ResponseEntity<ApiResponse<FaqDto>> answer(
             @PathVariable UUID campaignId,
             @PathVariable UUID faqId,
-            @Valid @RequestBody AnswerQuestionRequest request) {
+            @Valid @RequestBody AnswerQuestionRequest answerQuestionRequest,
+            HttpServletRequest request) {
 
         var creatorId = authContext.getCurrentUserId();
-        var faq = faqService.answer(creatorId, faqId, request);
+        var faq = faqService.answer(creatorId, faqId, answerQuestionRequest);
 
-        return ResponseEntity.ok(ApiResponse.ok(faq, "Pregunta respondida exitosamente"));
+        return ResponseEntity.ok(ApiResponse.ok(faq, "Pregunta respondida exitosamente", request.getRequestURI()));
     }
 
     // Público — solo las respondidas
     @GetMapping
     public ResponseEntity<ApiResponse<List<FaqDto>>> getPublic(
-            @PathVariable UUID campaignId) {
+            @PathVariable UUID campaignId,
+            HttpServletRequest request) {
 
         var faqs = faqService.getPublicFaqs(campaignId);
 
-        return ResponseEntity.ok(ApiResponse.ok(faqs, ""));
+        return ResponseEntity.ok(ApiResponse.ok(faqs, "", request.getRequestURI()));
     }
 
     // Creador — todas con detalle
     @GetMapping("/manage")
     public ResponseEntity<ApiResponse<List<FaqManageDto>>> manage(
-            @PathVariable UUID campaignId) {
+            @PathVariable UUID campaignId,
+            HttpServletRequest request) {
 
         var creatorId = authContext.getCurrentUserId();
         var faqs = faqService.getManageFaqs(creatorId, campaignId);
 
-        return ResponseEntity.ok(ApiResponse.ok(faqs, ""));
+        return ResponseEntity.ok(ApiResponse.ok(faqs, "", request.getRequestURI()));
     }
 
     // Creador elimina una pregunt a
     @DeleteMapping("/{faqId}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID campaignId,
-            @PathVariable UUID faqId) {
+            @PathVariable UUID faqId,
+            HttpServletRequest request) {
 
         var creatorId = authContext.getCurrentUserId();
         faqService.delete(creatorId, faqId);
 
-        return ResponseEntity.ok(ApiResponse.ok(null, "Pregunta eliminada exitosamente"));
+        return ResponseEntity.ok(ApiResponse.ok(null, "Pregunta eliminada exitosamente", request.getRequestURI()));
     }
 }
