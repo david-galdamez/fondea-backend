@@ -9,6 +9,7 @@ import com.project.fondea.model.Campaign;
 import com.project.fondea.model.Pledge;
 import com.project.fondea.model.Reward;
 import com.project.fondea.model.enums.CampaignStatus;
+import com.project.fondea.model.enums.NotificationType;
 import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.repository.CampaignRepository;
 import com.project.fondea.repository.PledgeRepository;
@@ -16,6 +17,7 @@ import com.project.fondea.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,6 +32,7 @@ public class PledgeService {
     private final RewardsService rewardsService;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     private static final BigDecimal NEAR_GOAL_THRESHOLD = new BigDecimal("0.80");
 
@@ -103,8 +106,16 @@ public class PledgeService {
                     campaign.getId(), PledgeStatus.PENDING
             );
 
-            sponsors.forEach(s ->
-                        emailService.sendNearGoalNotification(s, campaign));
+            sponsors.forEach(s -> {
+                emailService.sendNearGoalNotification(s, campaign);
+
+                notificationService.create(
+                        s,
+                        campaign,
+                        NotificationType.NEAR_GOAL,
+                        "La campaña '" + campaign.getTitle() + "' está cerca de alcanzar su meta."
+                );
+            });
         }
     }
 }
