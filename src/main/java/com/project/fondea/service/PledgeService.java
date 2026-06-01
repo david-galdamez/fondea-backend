@@ -18,7 +18,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +32,7 @@ public class PledgeService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final FeaturedCampaignService featuredCampaignService;
 
     private static final BigDecimal NEAR_GOAL_THRESHOLD = new BigDecimal("0.80");
 
@@ -80,6 +80,7 @@ public class PledgeService {
         var saved = pledgeRepository.save(pledge);
 
         checkAndNotifyNearGoal(campaign);
+        featuredCampaignService.recalculateScore(campaign);
 
         return PledgeMapper.toCreated(saved);
     }
