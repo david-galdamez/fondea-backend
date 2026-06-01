@@ -87,4 +87,9 @@ public class PaymentService {
                 .map(PaymentMapper::toDto)
                 .toList();
     }
+
+    public Payment findEntityById(UUID paymentId) {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Pago no encontrado"));
+    }
 }
