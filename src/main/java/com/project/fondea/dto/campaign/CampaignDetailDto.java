@@ -22,9 +22,9 @@ public record CampaignDetailDto(
         LocalDate deadline,
         Boolean isFlexibleGoal,
         CampaignStatus status,
-        String categoryName,
-        String locationCity,
-        String locationCountry,
+        UUID categoryId,
+        UUID locationId,
+        String city,
         List<RewardSummaryDto> rewards,   // recompensas disponibles
         List<FaqDto> faqs                 // preguntas frecuentes
 ) {

@@ -45,4 +45,15 @@ public class CampaignUpdateController {
 
             return ResponseEntity.ok(ApiResponse.ok(updates, "", request.getRequestURI()));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable("id") UUID updateId,
+            HttpServletRequest request
+    ) {
+        var userId = authContext.getCurrentUserId();
+        campaignUpdateService.delete(updateId, userId) ;
+
+        return ResponseEntity.ok(ApiResponse.ok(null, "Actualizacion borrada con exito", request.getRequestURI()));
+    }
 }

@@ -30,6 +30,18 @@ public class CampaignController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(campaign, "Campaña creada con exito", request.getRequestURI()));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CampaignCreatedDto>> updateCampaign(
+            @PathVariable("id") UUID campaignId,
+            @Valid @RequestBody RegisterCampaignRequest updateRequest,
+            HttpServletRequest request) {
+        var userId = context.getCurrentUserId();
+        var campaign = campaignService.update(campaignId, userId, updateRequest);
+        return ResponseEntity.ok(
+                ApiResponse.ok(campaign, "Campaña actualizada con éxito", request.getRequestURI())
+        );
+    }
+
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<CampaignSummaryDto>>> search(
             @RequestParam(required = false) UUID categoryId,

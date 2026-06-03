@@ -4,6 +4,7 @@ import com.project.fondea.dto.campaignUpdate.CampaignUpdateCreatedDto;
 import com.project.fondea.dto.campaignUpdate.CampaignUpdateDto;
 import com.project.fondea.dto.campaignUpdate.CampaignUpdateMapper;
 import com.project.fondea.dto.campaignUpdate.CreateUpdateRequest;
+import com.project.fondea.exception.BusinessRuleException;
 import com.project.fondea.exception.CampaignNotActiveException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.UnauthorizedActionException;
@@ -45,6 +46,7 @@ public class CampaignUpdateService {
                 .campaign(campaign)
                 .title(request.title())
                 .body(request.body())
+                .visibility(request.visibility())
                 .notificationSent(false)
                 .build();
 
@@ -59,6 +61,17 @@ public class CampaignUpdateService {
 
         saved.setNotificationSent(true);
         return CampaignUpdateMapper.toCreated(campaignUpdateRepository.save(saved));
+    }
+
+    public void delete(UUID updateId, UUID userId) {
+        var update = campaignUpdateRepository.findById(updateId)
+                .orElseThrow(() -> new EntityNotFoundException("Actualizacion no encontrada"));
+
+        if(!update.getCampaign().getCreator().getId().equals(userId)) {
+            throw new BusinessRuleException("No eres duenio de la campania");
+        }
+
+        campaignUpdateRepository.delete(update);
     }
 
     public List<CampaignUpdateDto> getByCampaign(UUID campaignId) {

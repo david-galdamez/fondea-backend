@@ -1,9 +1,8 @@
 package com.project.fondea.service;
 
-import com.project.fondea.dto.auth.LoginRequest;
-import com.project.fondea.dto.auth.LoginResponse;
-import com.project.fondea.dto.auth.RegisterUser;
+import com.project.fondea.dto.auth.*;
 import com.project.fondea.dto.user.UserMapper;
+import com.project.fondea.exception.BusinessRuleException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.IncorrectPasswordException;
 import com.project.fondea.exception.UserAlreadyExistsException;
@@ -19,6 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +31,36 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
 
+    private static final int CODE_EXPIRATION_MINUTES = 15;
+
+    public MeDto getMe(UUID userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        return UserMapper.toMeDto(user);
+    }
+
+    public MeDto updateProfile(UpdateRequest request, UUID userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        user.setBio(request.bio());
+        user.setCountry(request.country());
+        user.setName(request.name());
+        user.setCity(request.city());
+
+        userRepository.save(user);
+
+        return UserMapper.toMeDto(user);
+    }
+
     @Transactional
     public LoginResponse register(RegisterUser request, Role role) {
         if(userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException(request.email());
         }
+
+        String verificationCode =  generateCode();
 
         var user = User.builder()
                 .name(request.name())
@@ -41,6 +68,8 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
                 .isVerified(false)
+                .verificationCode(verificationCode)
+                .verificationCodeExpiresAt(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES))
                 .build();
 
         var saved = userRepository.save(user);
@@ -55,24 +84,91 @@ public class AuthService {
             creatorProfileRepository.save(profile);
         }
 
-        var userDto = UserMapper.toUserDto(user);
+        emailService.sendVerificationEmail(saved, verificationCode);
 
-        return new LoginResponse(jwtUtil.generateToken(userDto));
+        var userDto = UserMapper.toUserDto(saved);
+
+        return new LoginResponse(
+                jwtUtil.generateToken(userDto),
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getCreatedAt(),
+                user.getBio(),
+                user.getCity(),
+                user.getCountry()
+                );
+    }
+
+    @Transactional
+    public void verify(UUID userId, String code) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        if (user.getIsVerified()) {
+            throw new BusinessRuleException("El usuario ya está verificado");
+        }
+
+        if (user.getVerificationCode() == null ||
+                !user.getVerificationCode().equals(code)) {
+            throw new BusinessRuleException("El código de verificación es inválido");
+        }
+
+        if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BusinessRuleException("El código de verificación ha expirado");
+        }
+
+        // Verificar y limpiar el código
+        user.setIsVerified(true);
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void resendVerification(UUID userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        if (user.getIsVerified()) {
+            throw new BusinessRuleException("El usuario ya está verificado");
+        }
+
+        String newCode = generateCode();
+        user.setVerificationCode(newCode);
+        user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES));
+        userRepository.save(user);
+
+        emailService.sendVerificationEmail(user, newCode);
+    }
+
+    private String generateCode() {
+        // Genera un código de 6 dígitos — 000000 a 999999
+        return String.format("%06d", new Random().nextInt(999999));
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
 
-        var user = userRepository.findByEmail(loginRequest.email());
-        if(user.isEmpty()) {
-            throw new EntityNotFoundException("El correo es invalido o no existe");
-        }
+        var user = userRepository.findByEmail(loginRequest.email()).
+                orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        if(!passwordEncoder.matches(loginRequest.password(), user.get().getPasswordHash())) {
+        if(!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
             throw new IncorrectPasswordException("La contraseña es incorrecta");
         }
 
-        var userDto = UserMapper.toUserDto(user.get());
+        var userDto = UserMapper.toUserDto(user);
 
-        return new LoginResponse(jwtUtil.generateToken(userDto));
+        return new LoginResponse(
+                jwtUtil.generateToken(userDto),
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getCreatedAt(),
+                user.getBio(),
+                user.getCity(),
+                user.getCountry()
+                );
     }
 }
