@@ -48,9 +48,9 @@ public class CampaignMapper {
                 campaign.getDeadline(),
                 campaign.getIsFlexibleGoal(),
                 campaign.getStatus(),
-                campaign.getCategory().getName(),
-                campaign.getLocation().getCity(),
-                campaign.getLocation().getCountry(),
+                campaign.getCategory().getId(),
+                campaign.getLocation().getId(),
+                campaign.getCity(),
                 rewards,
                 faqs
         );

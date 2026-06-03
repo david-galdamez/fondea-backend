@@ -75,7 +75,7 @@ public class FaqController {
         return ResponseEntity.ok(ApiResponse.ok(faqs, "", request.getRequestURI()));
     }
 
-    // Creador elimina una pregunt a
+    // Creador elimina una pregunta
     @DeleteMapping("/{faqId}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID campaignId,

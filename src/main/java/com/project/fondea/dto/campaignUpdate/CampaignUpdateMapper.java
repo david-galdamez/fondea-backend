@@ -17,7 +17,8 @@ public class CampaignUpdateMapper {
                 update.getId(),
                 update.getTitle(),
                 update.getBody(),
-                update.getCreatedAt()
+                update.getCreatedAt(),
+                update.getVisibility()
         );
     }
 }

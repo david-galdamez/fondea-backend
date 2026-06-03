@@ -3,6 +3,7 @@ package com.project.fondea.service;
 import com.project.fondea.dto.campaign.*;
 import com.project.fondea.dto.faq.FaqMapper;
 import com.project.fondea.dto.rewards.RewardsMapper;
+import com.project.fondea.exception.BusinessRuleException;
 import com.project.fondea.exception.CampaignAlreadyReviewedException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.UnauthorizedActionException;
@@ -52,8 +53,38 @@ public class CampaignService {
         return CampaignMapper.toCreated(campaignRepository.save(campaign));
     }
 
+    public CampaignCreatedDto update(UUID campaignId, UUID userId, RegisterCampaignRequest registerRequest){
+
+        var creator = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        var category = categoryRepository.findById(registerRequest.categoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Categoria no encontrada"));
+
+        var location = locationRepository.findById(registerRequest.locationId())
+                .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada"));
+
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campania no encontrada"));
+
+        if(!campaign.getCreator().getId().equals(creator.getId())) {
+            throw new BusinessRuleException("No eres duenio de esta campania");
+        }
+
+        campaign.setTitle(registerRequest.title());
+        campaign.setDescription(registerRequest.description());
+        campaign.setCategory(category);
+        campaign.setLocation(location);
+        campaign.setGoalAmount(registerRequest.goalAmount());
+        campaign.setDeadline(registerRequest.deadline());
+        campaign.setIsFlexibleGoal(registerRequest.isFlexibleGoal());
+        campaign.setCity(registerRequest.city());
+
+        return CampaignMapper.toCreated(campaignRepository.save(campaign));
+    }
+
     public CampaignDetailDto getCampaignDetails(UUID campaignId) {
-        var campaign = campaignRepository.findByIdAndStatus(campaignId, CampaignStatus.ACTIVE)
+        var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
 
         var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(campaignId, PledgeStatus.PENDING);

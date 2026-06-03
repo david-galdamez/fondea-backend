@@ -1,20 +1,17 @@
 package com.project.fondea.controller;
 
-import com.project.fondea.dto.auth.LoginRequest;
-import com.project.fondea.dto.auth.LoginResponse;
-import com.project.fondea.dto.auth.RegisterUser;
+import com.project.fondea.dto.auth.*;
+import com.project.fondea.filter.AuthContext;
 import com.project.fondea.model.enums.Role;
 import com.project.fondea.service.AuthService;
 import com.project.fondea.util.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.sql.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/auth")
@@ -22,7 +19,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthContext authContext;
 
+    // En AuthController
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MeDto>> getMe(
+            HttpServletRequest request
+    ) {
+        var userId = authContext.getCurrentUserId();
+        var me = authService.getMe(userId);
+
+        return ResponseEntity.ok(ApiResponse.ok(me, "", request.getRequestURI()));
+    }
     @PostMapping("/register-creator")
     public ResponseEntity<ApiResponse<LoginResponse>> registerCreator(@Valid @RequestBody RegisterUser registerRequest, HttpServletRequest request) {
         var registerResponse = authService.register(registerRequest, Role.CREATOR);
@@ -60,5 +68,37 @@ public class AuthController {
                         request.getRequestURI()
                 )
         );
+    }
+
+    @PutMapping("/update-profile")
+    public ResponseEntity<ApiResponse<MeDto>> updateProfile(
+            @Valid @RequestBody UpdateRequest updateRequest,
+            HttpServletRequest request
+    ) {
+        var userId = authContext.getCurrentUserId();
+        var updateResponse = authService.updateProfile(updateRequest, userId);
+
+        return ResponseEntity.ok(ApiResponse.ok(updateResponse, "Perfil actualizado correctamente", request.getRequestURI()));
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<Void>> verify(
+            @RequestBody VerifyRequest request,
+            HttpServletRequest req) {
+
+        // El userId sale del token — el usuario ya está logueado pero no verificado
+        var userId = authContext.getCurrentUserId();
+        authService.verify(userId, request.code());
+
+        return ResponseEntity.ok(ApiResponse.ok(null, "Cuenta verificada exitosamente", req.getRequestURI()));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(HttpServletRequest request) {
+
+        var userId = authContext.getCurrentUserId();
+        authService.resendVerification(userId);
+
+        return ResponseEntity.ok(ApiResponse.ok(null, "Código reenviado exitosamente", request.getRequestURI()));
     }
 }

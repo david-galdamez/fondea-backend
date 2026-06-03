@@ -28,6 +28,15 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column
+    private String city;
+
+    @Column
+    private String country;
+
+    @Column
+    private String bio;
+
     @Column(nullable = false)
     private String passwordHash;
 
@@ -37,6 +46,12 @@ public class User {
 
     @Column(nullable = false)
     private Boolean isVerified = false;
+
+    @Column(nullable = true)
+    private String verificationCode;
+
+    @Column(nullable = true)
+    private LocalDateTime verificationCodeExpiresAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

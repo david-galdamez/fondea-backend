@@ -1,5 +1,6 @@
 package com.project.fondea.model;
 
+import com.project.fondea.model.enums.CampaignUpdateVisibility;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,8 +31,12 @@ public class CampaignUpdate {
     @Column(columnDefinition = "TEXT")
     private String body;
 
+    @Builder.Default
     private Boolean notificationSent = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    private CampaignUpdateVisibility visibility;
 }

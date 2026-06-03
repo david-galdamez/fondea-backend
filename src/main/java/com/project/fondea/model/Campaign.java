@@ -55,9 +55,15 @@ public class Campaign {
     @JoinColumn(name = "location_id")
     private Location location;
 
+    @Column
+    private String city;
+
     @Builder.Default
     @Column(nullable = false)
     private Double featuredScore = 0.0;
+
+    @Column
+    private String imageUrl;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -29,5 +29,8 @@ public record RegisterCampaignRequest (
     UUID categoryId,
 
     @NotNull(message = "El id de la ubicación es necesario")
-    UUID locationId
+    UUID locationId,
+
+    @NotBlank(message = "La ciudad es requerida")
+    String city
 ){}
