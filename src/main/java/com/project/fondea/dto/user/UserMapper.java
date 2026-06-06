@@ -10,6 +10,9 @@ public class UserMapper {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+                user.getCity(),
+                user.getCountry(),
+                user.getBio(),
                 user.getRole().name(),
                 user.getIsVerified(),
                 user.getCreatedAt()

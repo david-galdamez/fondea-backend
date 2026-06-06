@@ -3,6 +3,7 @@ package com.project.fondea.repository;
 import com.project.fondea.model.Campaign;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.PledgeStatus;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,7 +29,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
 
     List<Campaign> findByLocationId(UUID locationId);
 
-    List<Campaign> findByStatusOrderByFeaturedScoreDesc(CampaignStatus status);
+    List<Campaign> findByStatusOrderByFeaturedScoreDesc(CampaignStatus status, Limit limit);
 
     List<Campaign> findByStatusAndDeadlineBefore(CampaignStatus status, LocalDate date);
 
@@ -39,7 +40,12 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Pledge p " +
             "WHERE p.campaign.id = :campaignId AND p.status = :status")
-    BigDecimal sumPendingPledgesByCampaignId(@Param("campaignId") UUID campaignId, @Param("status")PledgeStatus status);
+    BigDecimal sumPledgesByCampaignIdAndStatus(@Param("campaignId") UUID campaignId, @Param("status")PledgeStatus status);
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Pledge p " +
+            "WHERE p.campaign.id = :campaignId " +
+            "AND p.status IN ('PENDING', 'CHARGED')")
+    BigDecimal sumActivePledgesByCampaignId(@Param("campaignId") UUID campaignId);
 
     @Query("SELECT COUNT(p) FROM Pledge p WHERE p.campaign.id = :campaignId")
     int countPledgesByCampaignId(@Param("campaignId") UUID campaignId);

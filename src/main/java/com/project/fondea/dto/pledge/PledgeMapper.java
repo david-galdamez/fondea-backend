@@ -6,6 +6,17 @@ import java.math.BigDecimal;
 
 public class PledgeMapper {
 
+    public static CampaignPledgeDto toCampaignPledge(Pledge pledge) {
+        return new CampaignPledgeDto(
+                pledge.getId(),
+                pledge.getSponsor().getId(),
+                pledge.getSponsor().getName(),
+                pledge.getAmount(),
+                pledge.getStatus(),
+                pledge.getCreatedAt()
+        );
+    }
+
     public static PledgeCreatedDto toCreated(Pledge pledge) {
         return new PledgeCreatedDto(
                 pledge.getId(),

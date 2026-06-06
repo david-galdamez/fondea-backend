@@ -1,7 +1,10 @@
 package com.project.fondea.service;
 
+import com.project.fondea.dto.PageableResponse;
 import com.project.fondea.dto.campaign.*;
 import com.project.fondea.dto.faq.FaqMapper;
+import com.project.fondea.dto.pledge.CampaignPledgeDto;
+import com.project.fondea.dto.pledge.PledgeMapper;
 import com.project.fondea.dto.rewards.RewardsMapper;
 import com.project.fondea.exception.BusinessRuleException;
 import com.project.fondea.exception.CampaignAlreadyReviewedException;
@@ -12,6 +15,9 @@ import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CampaignService {
     private final CampaignRepository campaignRepository;
+    private final WithdrawalRequestRepository withdrawalRequestRepository;
+    private final PledgeRepository pledgeRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
@@ -41,6 +49,7 @@ public class CampaignService {
         var campaign = Campaign.builder()
                 .title(registerRequest.title())
                 .description(registerRequest.description())
+                .coverImageUrl(registerRequest.coverImageUrl())
                 .goalAmount(registerRequest.goalAmount())
                 .isFlexibleGoal(registerRequest.isFlexibleGoal())
                 .deadline(registerRequest.deadline())
@@ -87,7 +96,7 @@ public class CampaignService {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
 
-        var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(campaignId, PledgeStatus.PENDING);
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
         var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
 
         var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
@@ -107,13 +116,16 @@ public class CampaignService {
         return campaignRepository.findByCreatorId(userId)
                 .stream()
                 .map(campaign -> {
-                    var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(campaign.getId(), PledgeStatus.PENDING);
-                    var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
-                    return CampaignMapper.toMyCampaign(campaign, totalPledged, pledgeCount);
+                    var totalPledged = campaignRepository.sumActivePledgesByCampaignId(
+                            campaign.getId());
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(
+                            campaign.getId());
+                    var committed = withdrawalRequestRepository
+                            .sumCommittedByCampaignId(campaign.getId());
+                    return CampaignMapper.toMyCampaign(campaign, totalPledged, pledgeCount, committed);
                 })
                 .toList();
     }
-
     public List<CampaignDraftDto> getDraftedCampaigns(UUID userId) {
         return campaignRepository.findByCreatorIdAndStatus(userId, CampaignStatus.DRAFT)
                 .stream()
@@ -121,11 +133,11 @@ public class CampaignService {
                 .toList();
     }
 
-    public List<CampaignSummaryDto> getFeatured() {
-        return campaignRepository.findByStatusOrderByFeaturedScoreDesc(CampaignStatus.ACTIVE)
+    public List<CampaignSummaryDto> getFeatured(int limit) {
+        return campaignRepository.findByStatusOrderByFeaturedScoreDesc(CampaignStatus.ACTIVE, Limit.of(limit))
                 .stream()
                 .map(campaign -> {
-                    var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(campaign.getId(), PledgeStatus.PENDING);
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaign.getId(), PledgeStatus.PENDING);
                     var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
                     return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
                 })
@@ -150,7 +162,7 @@ public class CampaignService {
 
         return campaigns.stream()
                 .map(campaign -> {
-                    var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
                             campaign.getId(), PledgeStatus.PENDING);
                     var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
                     return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
@@ -211,5 +223,29 @@ public class CampaignService {
         emailService.sendCampaignRejected(campaign.getCreator(), campaign);
 
         return CampaignMapper.toStatus(saved);
+    }
+
+    public PageableResponse<CampaignPledgeDto> getByCampaign(UUID campaignId,
+                                                             UUID creatorId,
+                                                             int page,
+                                                             int size) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        if (!campaign.getCreator().getId().equals(creatorId)) {
+            throw new UnauthorizedActionException("No eres el creador de esta campaña");
+        }
+
+        var pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+        var pledgePage = pledgeRepository.findByCampaignId(campaignId, pageable);
+
+        return new PageableResponse<>(
+                pledgePage.getContent().stream().map(PledgeMapper::toCampaignPledge).toList(),
+                page,
+                size,
+                pledgePage.getTotalElements(),
+                pledgePage.getTotalPages(),
+                pledgePage.isLast()
+        );
     }
 }

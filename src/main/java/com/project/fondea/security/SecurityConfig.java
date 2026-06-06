@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/campaigns/*/faqs").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/faqs").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/campaigns/*/rewards").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/*/pledges").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/*/rewards/manage").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/campaigns/*/rewards/*").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/withdrawals").hasRole("CREATOR")

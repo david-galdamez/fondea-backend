@@ -7,6 +7,9 @@ public record MeDto(
         UUID id,
         String name,
         String email,
+        String city,
+        String country,
+        String bio,
         String role,
         Boolean isVerified,
         LocalDateTime createdAt

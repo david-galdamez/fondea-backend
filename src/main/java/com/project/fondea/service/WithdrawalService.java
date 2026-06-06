@@ -1,15 +1,13 @@
 package com.project.fondea.service;
 
-import com.project.fondea.dto.withdrawal.CreateWithdrawalRequest;
-import com.project.fondea.dto.withdrawal.WithdrawalCreatedDto;
-import com.project.fondea.dto.withdrawal.WithdrawalDto;
-import com.project.fondea.dto.withdrawal.WithdrawalMapper;
+import com.project.fondea.dto.withdrawal.*;
 import com.project.fondea.exception.CampaignGoalNotReachedException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.UnauthorizedActionException;
 import com.project.fondea.exception.WithdrawalLimitExceededException;
 import com.project.fondea.model.WithdrawalRequest;
 import com.project.fondea.model.enums.CampaignStatus;
+import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.model.enums.WithdrawalStatus;
 import com.project.fondea.repository.CampaignRepository;
 import com.project.fondea.repository.CreatorProfileRepository;
@@ -50,6 +48,24 @@ public class WithdrawalService {
             throw new CampaignGoalNotReachedException(request.campaignId());
         }
 
+        // Calcular disponible real
+        var totalCharged = campaignRepository.sumActivePledgesByCampaignId(
+                request.campaignId());
+
+        var netTotal = totalCharged.multiply(new BigDecimal("0.95"));
+
+        var committed = withdrawalRequestRepository
+                .sumCommittedByCampaignId(request.campaignId());
+
+        var available = netTotal.subtract(committed).max(BigDecimal.ZERO);
+
+        if (request.grossAmount().compareTo(available) > 0) {
+            throw new BusinessRuleException(
+                    "El monto solicitado supera el disponible. Disponible: " + available
+            );
+        }
+
+        // Límite diario para creadores nuevos
         if (profile.getIsNewCreator()) {
             var withdrawnToday = withdrawalRequestRepository
                     .sumWithdrawnTodayByCreatorId(creatorId);
@@ -77,7 +93,6 @@ public class WithdrawalService {
 
         return WithdrawalMapper.toCreated(withdrawalRequestRepository.save(withdrawal));
     }
-
     public List<WithdrawalDto> getMyWithdrawals(UUID creatorId) {
         return withdrawalRequestRepository.findByCreatorId(creatorId)
                 .stream()
@@ -120,5 +135,18 @@ public class WithdrawalService {
     private WithdrawalRequest findById(UUID withdrawalId) {
         return withdrawalRequestRepository.findById(withdrawalId)
                 .orElseThrow(() -> new EntityNotFoundException("Solicitud de retiro no encontrada"));
+    }
+
+    public WithdrawalLimitsDto getLimits(UUID creatorId) {
+        var profile = creatorProfileRepository.findByUserId(creatorId)
+                .orElseThrow(() -> new EntityNotFoundException("Perfil no encontrado"));
+        var usedToday = withdrawalRequestRepository.sumWithdrawnTodayByCreatorId(creatorId);
+        var available = profile.getDailyWithdrawalLimit().subtract(usedToday).max(BigDecimal.ZERO);
+        return new WithdrawalLimitsDto(
+                profile.getIsNewCreator(),
+                profile.getDailyWithdrawalLimit(),
+                usedToday,
+                available
+        );
     }
 }

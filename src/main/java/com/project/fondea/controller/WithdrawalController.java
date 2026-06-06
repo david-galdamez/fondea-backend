@@ -3,6 +3,7 @@ package com.project.fondea.controller;
 import com.project.fondea.dto.withdrawal.CreateWithdrawalRequest;
 import com.project.fondea.dto.withdrawal.WithdrawalCreatedDto;
 import com.project.fondea.dto.withdrawal.WithdrawalDto;
+import com.project.fondea.dto.withdrawal.WithdrawalLimitsDto;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.WithdrawalService;
 import com.project.fondea.util.ApiResponse;
@@ -44,5 +45,12 @@ public class WithdrawalController {
         var withdrawals = withdrawalService.getMyWithdrawals(creatorId);
 
         return ResponseEntity.ok(ApiResponse.ok(withdrawals, "", request.getRequestURI()));
+    }
+
+    @GetMapping("/limits")
+    public ResponseEntity<ApiResponse<WithdrawalLimitsDto>> getLimits(HttpServletRequest request) {
+        var creatorId = authContext.getCurrentUserId();
+        var limits = withdrawalService.getLimits(creatorId);
+        return ResponseEntity.ok(ApiResponse.ok(limits, "", request.getRequestURI()));
     }
 }

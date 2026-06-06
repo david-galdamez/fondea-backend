@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record WithdrawalDto(
         UUID id,
+        UUID campaignId,
         String campaignTitle,
         BigDecimal grossAmount,
         BigDecimal commissionAmount,
