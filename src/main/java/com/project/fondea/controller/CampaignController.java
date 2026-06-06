@@ -1,6 +1,8 @@
 package com.project.fondea.controller;
 
+import com.project.fondea.dto.PageableResponse;
 import com.project.fondea.dto.campaign.*;
+import com.project.fondea.dto.pledge.CampaignPledgeDto;
 import com.project.fondea.filter.AuthContext;
 import com.project.fondea.service.CampaignService;
 import com.project.fondea.util.ApiResponse;
@@ -81,8 +83,8 @@ public class CampaignController {
     }
 
     @GetMapping("/featured")
-    public ResponseEntity<ApiResponse<List<CampaignSummaryDto>>> getFeatured(HttpServletRequest request) {
-        var campaigns = campaignService.getFeatured();
+    public ResponseEntity<ApiResponse<List<CampaignSummaryDto>>> getFeatured(@RequestParam(defaultValue = "6")int limit,HttpServletRequest request) {
+        var campaigns = campaignService.getFeatured(limit);
         return ResponseEntity.ok(ApiResponse.ok(campaigns, "", request.getRequestURI()));
     }
 
@@ -91,6 +93,20 @@ public class CampaignController {
         var userId = context.getCurrentUserId();
         var campaigns = campaignService.getDraftedCampaigns(userId);
         return ResponseEntity.ok(ApiResponse.ok(campaigns, "", request.getRequestURI()));
+    }
+
+    // En CampaignController
+    @GetMapping("/{campaignId}/pledges")
+    public ResponseEntity<ApiResponse<PageableResponse<CampaignPledgeDto>>> getPledges(
+            @PathVariable UUID campaignId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpServletRequest request) {
+
+        var creatorId = context.getCurrentUserId();
+        var pledges = campaignService.getByCampaign(campaignId, creatorId, page, size);
+
+        return ResponseEntity.ok(ApiResponse.ok(pledges, "", request.getRequestURI()));
     }
 
 }

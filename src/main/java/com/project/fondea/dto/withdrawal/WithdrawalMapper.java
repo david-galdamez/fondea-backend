@@ -17,6 +17,7 @@ public class WithdrawalMapper {
     public static WithdrawalDto toDto(WithdrawalRequest withdrawal) {
         return new WithdrawalDto(
                 withdrawal.getId(),
+                withdrawal.getCampaign().getId(),
                 withdrawal.getCampaign().getTitle(),
                 withdrawal.getGrossAmount(),
                 withdrawal.getCommissionAmount(),

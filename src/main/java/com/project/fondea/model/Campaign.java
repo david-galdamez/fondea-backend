@@ -31,6 +31,9 @@ public class Campaign {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "TEXT")
+    private String coverImageUrl;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 

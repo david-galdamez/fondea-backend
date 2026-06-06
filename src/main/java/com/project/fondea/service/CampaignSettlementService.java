@@ -33,7 +33,7 @@ public class CampaignSettlementService {
     }
 
     private void settleCampaign(Campaign campaign) {
-        var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
                 campaign.getId(),
                 PledgeStatus.PENDING
         );

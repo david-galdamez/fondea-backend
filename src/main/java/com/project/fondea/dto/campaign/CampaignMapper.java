@@ -13,18 +13,24 @@ import java.util.List;
 
 public class CampaignMapper {
     public static CampaignSummaryDto toSummary(Campaign campaign, BigDecimal totalPledged, int pledgeCount) {
+
+        boolean featured = campaign.getFeaturedScore() != null && campaign.getFeaturedScore() > 0;
+
         return new CampaignSummaryDto(
                 campaign.getId(),
                 campaign.getTitle(),
                 campaign.getCreator().getName(),
+                campaign.getCoverImageUrl(),
                 campaign.getGoalAmount(),
                 totalPledged,
                 pledgeCount,
                 campaign.getDeadline(),
                 campaign.getCategory().getName(),
-                campaign.getLocation().getCity(),
+                campaign.getCity(),
+                campaign.getLocation().getCountry(),
                 campaign.getStatus(),
-                campaign.getFeaturedScore()
+                campaign.getFeaturedScore(),
+                featured
         );
     }
 
@@ -58,12 +64,13 @@ public class CampaignMapper {
 
     public static MyCampaignDto toMyCampaign(Campaign campaign,
                                              BigDecimal totalPledged,
-                                             int pledgeCount) {
+                                             int pledgeCount,
+                                             BigDecimal committed) {
         int daysLeft = (int) LocalDate.now().until(campaign.getDeadline(), ChronoUnit.DAYS);
 
         BigDecimal availableToWithdraw = BigDecimal.ZERO;
         if (campaign.getStatus() == CampaignStatus.SUCCESSFUL) {
-            availableToWithdraw = totalPledged.multiply(new BigDecimal("0.95"));
+            availableToWithdraw = totalPledged.subtract(committed).max(BigDecimal.ZERO);
         }
 
         return new MyCampaignDto(

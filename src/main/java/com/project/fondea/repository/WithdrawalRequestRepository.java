@@ -17,9 +17,17 @@ public interface WithdrawalRequestRepository extends JpaRepository<WithdrawalReq
 
     List<WithdrawalRequest> findByStatus(WithdrawalStatus status);
 
+    boolean existsByCampaignIdAndStatusIn(UUID campaignId, List<WithdrawalStatus> statuses);
+
     @Query("SELECT COALESCE(SUM(w.netAmount), 0) FROM WithdrawalRequest w " +
             "WHERE w.creator.id = :creatorId " +
             "AND w.status = 'PAID' " +
             "AND CAST(w.paidAt AS date) = CURRENT_DATE")
     BigDecimal sumWithdrawnTodayByCreatorId(@Param("creatorId") UUID creatorId);
+
+    // En WithdrawalRequestRepository
+    @Query("SELECT COALESCE(SUM(w.grossAmount), 0) FROM WithdrawalRequest w " +
+            "WHERE w.campaign.id = :campaignId " +
+            "AND w.status IN ('PENDING', 'APPROVED', 'PAID')")
+    BigDecimal sumCommittedByCampaignId(@Param("campaignId") UUID campaignId);
 }

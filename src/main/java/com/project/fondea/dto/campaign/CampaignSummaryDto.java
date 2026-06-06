@@ -10,13 +10,16 @@ public record CampaignSummaryDto(
         UUID id,
         String title,
         String creatorName,
+        String coverImageUrl,
         BigDecimal goalAmount,
         BigDecimal totalPledged,    // cuánto llevan recaudado
         int pledgeCount,            // cuántos patrocinadores tiene
         LocalDate deadline,
         String categoryName,
         String locationCity,
+        String locationCountry,
         CampaignStatus status,
-        Double featuredScore
+        Double featuredScore,
+        boolean featured
 ) {
 }

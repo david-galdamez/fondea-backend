@@ -18,6 +18,8 @@ public record RegisterCampaignRequest (
 
     BigDecimal goalAmount,
 
+    String coverImageUrl,
+
     @NotNull(message = "El campo es necesario")
     Boolean isFlexibleGoal,
 

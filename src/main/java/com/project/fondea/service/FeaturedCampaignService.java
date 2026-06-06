@@ -17,7 +17,7 @@ public class FeaturedCampaignService {
     private final CampaignRepository campaignRepository;
 
     public void recalculateScore(Campaign campaign) {
-        var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
                 campaign.getId(),
                 PledgeStatus.PENDING
         );

@@ -89,7 +89,7 @@ public class PledgeService {
         return pledgeRepository.findBySponsorId(sponsorId)
                 .stream()
                 .map(pledge -> {
-                    var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
                             pledge.getCampaign().getId(), PledgeStatus.PENDING);
                     return PledgeMapper.toMyPledge(pledge, totalPledged);
                 })
@@ -97,7 +97,7 @@ public class PledgeService {
     }
 
     private void checkAndNotifyNearGoal(Campaign campaign) {
-        var totalPledged = campaignRepository.sumPendingPledgesByCampaignId(
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
                 campaign.getId(), PledgeStatus.PENDING);
 
         var threshold = campaign.getGoalAmount().multiply(NEAR_GOAL_THRESHOLD);
