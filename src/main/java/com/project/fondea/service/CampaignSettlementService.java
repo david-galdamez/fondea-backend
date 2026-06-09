@@ -18,6 +18,7 @@ public class CampaignSettlementService {
 
     private final CampaignRepository campaignRepository;
     private final PledgeRepository pledgeRepository;
+    private final RewardsService rewardService;
     private final PaymentService paymentService;
     private final DonationCertificateService donationCertificateService;
     private final NotificationService notificationService;
@@ -82,11 +83,12 @@ public class CampaignSettlementService {
         campaignRepository.save(campaign);
 
         pledges.forEach(pledge -> {
-            paymentService.refundPayment(
-                    pledge.getId(),
-                    "REFUND-" + pledge.getId()
-            );
+            pledge.setStatus(PledgeStatus.EXPIRED);
+            pledgeRepository.save(pledge);
 
+            if (pledge.getReward() != null) {
+                rewardService.increaseStock(pledge.getReward().getId());
+            }
             notificationService.create(
                     pledge.getSponsor(),
                     campaign,

@@ -52,12 +52,10 @@ public class WithdrawalService {
         var totalCharged = campaignRepository.sumActivePledgesByCampaignId(
                 request.campaignId());
 
-        var netTotal = totalCharged.multiply(new BigDecimal("0.95"));
-
         var committed = withdrawalRequestRepository
                 .sumCommittedByCampaignId(request.campaignId());
 
-        var available = netTotal.subtract(committed).max(BigDecimal.ZERO);
+        var available = totalCharged.subtract(committed).max(BigDecimal.ZERO);
 
         if (request.grossAmount().compareTo(available) > 0) {
             throw new BusinessRuleException(

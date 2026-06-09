@@ -2,10 +2,7 @@ package com.project.fondea.service;
 
 import com.project.fondea.dto.auth.*;
 import com.project.fondea.dto.user.UserMapper;
-import com.project.fondea.exception.BusinessRuleException;
-import com.project.fondea.exception.EntityNotFoundException;
-import com.project.fondea.exception.IncorrectPasswordException;
-import com.project.fondea.exception.UserAlreadyExistsException;
+import com.project.fondea.exception.*;
 import com.project.fondea.model.CreatorProfile;
 import com.project.fondea.model.User;
 import com.project.fondea.model.enums.Role;
@@ -94,6 +91,7 @@ public class AuthService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
+                user.getIsVerified(),
                 user.getCreatedAt(),
                 user.getBio(),
                 user.getCity(),
@@ -165,6 +163,7 @@ public class AuthService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
+                user.getIsVerified(),
                 user.getCreatedAt(),
                 user.getBio(),
                 user.getCity(),

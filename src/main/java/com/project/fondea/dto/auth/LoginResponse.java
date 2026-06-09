@@ -12,6 +12,7 @@ public record LoginResponse(
         String email,
         Role role,
 
+        Boolean isVerified,
         LocalDateTime createdAt,
         String bio,
         String city,
