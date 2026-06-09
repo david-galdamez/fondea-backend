@@ -9,6 +9,7 @@ public record CampaignReviewDto(
         UUID id,
         String title,
         String description,
+        UUID creatorId,
         String creatorName,
         String creatorEmail,         // para contactar al creador si hay dudas
         BigDecimal goalAmount,

@@ -101,6 +101,7 @@ public class CampaignMapper {
                 campaign.getId(),
                 campaign.getTitle(),
                 campaign.getDescription(),
+                campaign.getCreator().getId(),
                 campaign.getCreator().getName(),
                 campaign.getCreator().getEmail(),
                 campaign.getGoalAmount(),

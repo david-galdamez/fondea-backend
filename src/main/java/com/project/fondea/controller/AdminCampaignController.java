@@ -2,6 +2,7 @@ package com.project.fondea.controller;
 
 import com.project.fondea.dto.campaign.CampaignReviewDto;
 import com.project.fondea.dto.campaign.CampaignStatusDto;
+import com.project.fondea.dto.campaign.CampaignSummaryDto;
 import com.project.fondea.service.CampaignService;
 import com.project.fondea.util.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,19 @@ import java.util.UUID;
 public class AdminCampaignController {
 
     private final CampaignService campaignService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CampaignSummaryDto>>> getAll(HttpServletRequest request) {
+        var campaigns = campaignService.getAll();
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        campaigns,
+                        "Campañas pendientes obtenidas correctamente",
+                        request.getRequestURI()
+                )
+        );
+    }
 
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<CampaignReviewDto>>> getPending(HttpServletRequest request) {

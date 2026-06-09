@@ -37,6 +37,7 @@ public class SecurityConfig {
 
                         // ── Autenticación ────────────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/campaigns/featured").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         // ── Admin ────────────────────────────────────────────────
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

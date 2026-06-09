@@ -36,6 +36,17 @@ public class CampaignService {
     private final CampaignFaqRepository faqRepository;
     private final EmailService emailService;
 
+    public List<CampaignSummaryDto> getAll() {
+        var campaigns = campaignRepository.findAll();
+
+        return campaigns.stream()
+                .map(campaign -> {
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaign.getId(), PledgeStatus.PENDING);
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
+                    return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
+                }).toList();
+    }
+
     public CampaignCreatedDto create(UUID userId, RegisterCampaignRequest registerRequest) {
         var creator = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
