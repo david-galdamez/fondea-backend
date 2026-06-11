@@ -6,26 +6,31 @@ import com.project.fondea.model.enums.CampaignStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public record CampaignDetailDto(
         UUID id,
         String title,
-        String description,          // texto completo
+        String description,
+        String coverImageUrl,
         String creatorName,
         UUID creatorId,
         BigDecimal goalAmount,
         BigDecimal totalPledged,
         int pledgeCount,
-        int daysLeft,                // calculado: deadline - hoy
+        int daysLeft,
         LocalDate deadline,
+        LocalDateTime createdAt,
         Boolean isFlexibleGoal,
         CampaignStatus status,
         UUID categoryId,
         UUID locationId,
+        String country,
         String city,
-        List<RewardSummaryDto> rewards,   // recompensas disponibles
-        List<FaqDto> faqs                 // preguntas frecuentes
+        List<RewardSummaryDto> rewards,
+        List<FaqDto> faqs,
+        String rejectionReason
 ) {
 }

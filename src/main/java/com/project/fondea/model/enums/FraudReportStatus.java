@@ -2,6 +2,7 @@ package com.project.fondea.model.enums;
 
 public enum FraudReportStatus {
     PENDING,
-    REVIEWED,
+    REVIEWING,
+    RESOLVED,
     DISMISSED
 }

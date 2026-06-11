@@ -7,14 +7,17 @@ import com.project.fondea.exception.BusinessRuleException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.FraudReportAlreadyExistsException;
 import com.project.fondea.model.FraudReport;
+import com.project.fondea.model.User;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.FraudReportStatus;
 import com.project.fondea.repository.CampaignRepository;
 import com.project.fondea.repository.FraudReportRepository;
 import com.project.fondea.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,9 +28,22 @@ public class FraudReportService {
     private final FraudReportRepository fraudReportRepository;
     private final CampaignRepository campaignRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public List<FraudReportDto> getPendingReports() {
-        return fraudReportRepository.findByStatus(FraudReportStatus.PENDING)
+    public FraudReportDto getById(UUID id) {
+        var report = fraudReportRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reporte de fraude no encontrado"));
+        return FraudReportMapper.toDto(report);
+    }
+
+    public List<FraudReportDto> getReportsByStatus(FraudReportStatus status) {
+        if (status == null) {
+            return fraudReportRepository.findAll()
+                    .stream()
+                    .map(FraudReportMapper::toDto)
+                    .toList();
+        }
+        return fraudReportRepository.findByStatus(status)
                 .stream()
                 .map(FraudReportMapper::toDto)
                 .toList();
@@ -71,19 +87,74 @@ public class FraudReportService {
         );
     }
 
-    public FraudReportDto reviewReport(UUID reportId) {
-        var report = fraudReportRepository.findById(reportId)
-                .orElseThrow(() -> new EntityNotFoundException("Reporte de fraude no encontrado"));
+    public FraudReportDto reviewReport(UUID reportId, User admin) {
+        var report = getReportEntity(reportId);
 
         if (report.getStatus() != FraudReportStatus.PENDING) {
-            throw new BusinessRuleException("El reporte de fraude ya fue revisado");
+            throw new BusinessRuleException("El reporte de fraude no está pendiente");
         }
 
-        report.setStatus(FraudReportStatus.REVIEWED);
+        report.setStatus(FraudReportStatus.REVIEWING);
+        report.setReviewedBy(admin);
 
         return FraudReportMapper.toDto(
                 fraudReportRepository.save(report)
         );
+    }
+
+    @Transactional
+    public FraudReportDto resolveReport(UUID reportId, User admin, String notes) {
+        var report = getReportEntity(reportId);
+
+        if (report.getStatus() != FraudReportStatus.REVIEWING && report.getStatus() != FraudReportStatus.PENDING) {
+            throw new BusinessRuleException("El reporte de fraude ya fue resuelto o descartado");
+        }
+
+        report.setStatus(FraudReportStatus.RESOLVED);
+        report.setReviewedBy(admin);
+        report.setResolutionNotes(notes);
+        report.setResolvedAt(LocalDateTime.now());
+
+        notificationService.create(
+                report.getReporter(),
+                report.getCampaign(),
+                com.project.fondea.model.enums.NotificationType.FRAUD_REPORT_RESOLVED,
+                "Tu reporte contra '" + report.getCampaign().getTitle() + "' fue resuelto."
+        );
+
+        return FraudReportMapper.toDto(
+                fraudReportRepository.save(report)
+        );
+    }
+
+    @Transactional
+    public FraudReportDto dismissReport(UUID reportId, User admin, String notes) {
+        var report = getReportEntity(reportId);
+
+        if (report.getStatus() != FraudReportStatus.REVIEWING && report.getStatus() != FraudReportStatus.PENDING) {
+            throw new BusinessRuleException("El reporte de fraude ya fue resuelto o descartado");
+        }
+
+        report.setStatus(FraudReportStatus.DISMISSED);
+        report.setReviewedBy(admin);
+        report.setResolutionNotes(notes);
+        report.setResolvedAt(LocalDateTime.now());
+
+        notificationService.create(
+                report.getReporter(),
+                report.getCampaign(),
+                com.project.fondea.model.enums.NotificationType.FRAUD_REPORT_DISMISSED,
+                "Tu reporte contra '" + report.getCampaign().getTitle() + "' fue descartado."
+        );
+
+        return FraudReportMapper.toDto(
+                fraudReportRepository.save(report)
+        );
+    }
+
+    private FraudReport getReportEntity(UUID reportId) {
+        return fraudReportRepository.findById(reportId)
+                .orElseThrow(() -> new EntityNotFoundException("Reporte de fraude no encontrado"));
     }
 
 }

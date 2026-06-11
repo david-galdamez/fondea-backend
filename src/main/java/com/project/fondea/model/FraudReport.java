@@ -39,6 +39,11 @@ public class FraudReport {
     @JoinColumn(name = "reviewed_by")
     private User reviewedBy;
 
+    @Column(columnDefinition = "TEXT")
+    private String resolutionNotes;
+
+    private LocalDateTime resolvedAt;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

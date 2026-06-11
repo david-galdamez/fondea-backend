@@ -28,6 +28,7 @@ public class CampaignUpdateService {
     private final CampaignRepository campaignRepository;
     private final PledgeRepository pledgeRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CampaignUpdateCreatedDto publish(UUID creatorId, UUID campaignId, CreateUpdateRequest request) {
@@ -58,6 +59,15 @@ public class CampaignUpdateService {
                 campaignId, PledgeStatus.CHARGED));
 
         emailService.sendUpdateToSponsors(sponsors, campaign, saved);
+
+        sponsors.forEach(sponsor ->
+                notificationService.create(
+                        sponsor,
+                        campaign,
+                        com.project.fondea.model.enums.NotificationType.NEW_UPDATE,
+                        "Nueva actualización en '" + campaign.getTitle() + "': " + request.title()
+                )
+        );
 
         saved.setNotificationSent(true);
         return CampaignUpdateMapper.toCreated(campaignUpdateRepository.save(saved));

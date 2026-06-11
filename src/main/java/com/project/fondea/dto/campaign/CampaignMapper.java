@@ -45,6 +45,7 @@ public class CampaignMapper {
                 campaign.getId(),
                 campaign.getTitle(),
                 campaign.getDescription(),
+                campaign.getCoverImageUrl(),
                 campaign.getCreator().getName(),
                 campaign.getCreator().getId(),
                 campaign.getGoalAmount(),
@@ -52,13 +53,16 @@ public class CampaignMapper {
                 pledgeCount,
                 daysLeft,
                 campaign.getDeadline(),
+                campaign.getCreatedAt(),
                 campaign.getIsFlexibleGoal(),
                 campaign.getStatus(),
                 campaign.getCategory().getId(),
                 campaign.getLocation().getId(),
+                campaign.getLocation().getCountry(),
                 campaign.getCity(),
                 rewards,
-                faqs
+                faqs,
+                campaign.getRejectionReason()
         );
     }
 
@@ -82,7 +86,8 @@ public class CampaignMapper {
                 campaign.getDeadline(),
                 campaign.getStatus(),
                 daysLeft,
-                availableToWithdraw
+                availableToWithdraw,
+                campaign.getRejectionReason()
         );
     }
 
@@ -109,7 +114,8 @@ public class CampaignMapper {
                 campaign.getDeadline(),
                 campaign.getCategory().getName(),
                 campaign.getLocation().getCity(),
-                campaign.getCreatedAt()
+                campaign.getCreatedAt(),
+                campaign.getRejectionReason()
         );
     }
 

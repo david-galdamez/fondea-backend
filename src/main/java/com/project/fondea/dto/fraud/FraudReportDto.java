@@ -14,6 +14,8 @@ public record FraudReportDto(
         String campaignTitle,
         String reason,
         FraudReportStatus status,
+        String resolutionNotes,
+        LocalDateTime resolvedAt,
         LocalDateTime createdAt
 ) {
 }

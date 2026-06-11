@@ -14,6 +14,8 @@ public class FraudReportMapper {
                 fraudReport.getCampaign().getTitle(),
                 fraudReport.getReason(),
                 fraudReport.getStatus(),
+                fraudReport.getResolutionNotes(),
+                fraudReport.getResolvedAt(),
                 fraudReport.getCreatedAt()
         );
     }

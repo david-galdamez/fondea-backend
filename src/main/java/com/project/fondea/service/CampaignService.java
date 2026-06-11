@@ -14,6 +14,7 @@ import com.project.fondea.model.Campaign;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.PledgeStatus;
 import com.project.fondea.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ public class CampaignService {
     private final RewardRepository rewardRepository;
     private final CampaignFaqRepository faqRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public List<CampaignSummaryDto> getAll() {
         var campaigns = campaignRepository.findAll();
@@ -204,7 +206,8 @@ public class CampaignService {
         campaignRepository.save(campaign);
     }
 
-    public CampaignStatusDto approve(UUID campaignId) {
+    @Transactional
+    public CampaignDetailDto approve(UUID campaignId) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
 
@@ -217,10 +220,31 @@ public class CampaignService {
 
         emailService.sendCampaignApproved(campaign.getCreator(), campaign);
 
-        return CampaignMapper.toStatus(saved);
+        notificationService.create(
+                campaign.getCreator(),
+                campaign,
+                com.project.fondea.model.enums.NotificationType.CAMPAIGN_APPROVED,
+                "Tu campaña '" + campaign.getTitle() + "' fue aprobada y ya está activa."
+        );
+
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
+        var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
+
+        var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
+                .stream()
+                .map(RewardsMapper::toRewardsSummary)
+                .toList();
+
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
+                .stream()
+                .map(FaqMapper::toDto)
+                .toList();
+
+        return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
     }
 
-    public CampaignStatusDto reject(UUID campaignId) {
+    @Transactional
+    public CampaignDetailDto reject(UUID campaignId, String rejectionReason) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
 
@@ -229,11 +253,33 @@ public class CampaignService {
         }
 
         campaign.setStatus(CampaignStatus.DRAFT);
+        campaign.setRejectionReason(rejectionReason);
         var saved = campaignRepository.save(campaign);
 
         emailService.sendCampaignRejected(campaign.getCreator(), campaign);
 
-        return CampaignMapper.toStatus(saved);
+        notificationService.create(
+                campaign.getCreator(),
+                campaign,
+                com.project.fondea.model.enums.NotificationType.CAMPAIGN_REJECTED,
+                "Tu campaña '" + campaign.getTitle() + "' fue rechazada" +
+                        (rejectionReason != null ? ": " + rejectionReason : ".")
+        );
+
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
+        var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
+
+        var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
+                .stream()
+                .map(RewardsMapper::toRewardsSummary)
+                .toList();
+
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
+                .stream()
+                .map(FaqMapper::toDto)
+                .toList();
+
+        return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
     }
 
     public PageableResponse<CampaignPledgeDto> getByCampaign(UUID campaignId,

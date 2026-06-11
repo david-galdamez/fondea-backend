@@ -3,6 +3,7 @@ package com.project.fondea.dto.user;
 import com.project.fondea.model.enums.Role;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -15,4 +16,5 @@ public class UserDto {
     private String email;
     private Role role;
     private boolean isVerified;
+    private LocalDateTime createdAt;
 }

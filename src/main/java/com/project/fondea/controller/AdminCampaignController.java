@@ -1,8 +1,10 @@
 package com.project.fondea.controller;
 
+import com.project.fondea.dto.campaign.CampaignDetailDto;
 import com.project.fondea.dto.campaign.CampaignReviewDto;
 import com.project.fondea.dto.campaign.CampaignStatusDto;
 import com.project.fondea.dto.campaign.CampaignSummaryDto;
+import com.project.fondea.dto.campaign.RejectCampaignRequest;
 import com.project.fondea.service.CampaignService;
 import com.project.fondea.util.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +29,7 @@ public class AdminCampaignController {
         return ResponseEntity.ok(
                 ApiResponse.ok(
                         campaigns,
-                        "Campañas pendientes obtenidas correctamente",
+                        "Campañas obtenidas correctamente",
                         request.getRequestURI()
                 )
         );
@@ -47,7 +49,7 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> approve(
+    public ResponseEntity<ApiResponse<CampaignDetailDto>> approve(
             @PathVariable UUID id,
             HttpServletRequest request
     ) {
@@ -63,11 +65,13 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<ApiResponse<CampaignStatusDto>> reject(
+    public ResponseEntity<ApiResponse<CampaignDetailDto>> reject(
             @PathVariable UUID id,
+            @RequestBody(required = false) RejectCampaignRequest body,
             HttpServletRequest request
     ) {
-        var campaign = campaignService.reject(id);
+        var reason = body != null ? body.rejectionReason() : null;
+        var campaign = campaignService.reject(id, reason);
 
         return ResponseEntity.ok(
                 ApiResponse.ok(

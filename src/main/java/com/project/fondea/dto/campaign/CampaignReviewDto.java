@@ -11,12 +11,13 @@ public record CampaignReviewDto(
         String description,
         UUID creatorId,
         String creatorName,
-        String creatorEmail,         // para contactar al creador si hay dudas
+        String creatorEmail,
         BigDecimal goalAmount,
         Boolean isFlexibleGoal,
         LocalDate deadline,
         String categoryName,
         String locationCity,
-        LocalDateTime submittedAt    // cuándo lo envió a revisión
+        LocalDateTime submittedAt,
+        String rejectionReason
 ) {
 }

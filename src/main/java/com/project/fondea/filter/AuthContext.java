@@ -25,16 +25,11 @@ public class AuthContext {
         }
 
         var principal = authentication.getPrincipal();
-        System.out.println("PRINCIPAL TYPE: " + principal.getClass().getName());
-        System.out.println("PRINCIPAL VALUE: " + principal);
 
-        // DevTools puede causar conflictos de classloader en desarrollo
-        // forzamos la recarga del usuario desde la BD por su id
         if (principal instanceof User user) {
             return user;
         }
 
-        // Si el principal es String intenta parsearlo como UUID
         if (principal instanceof String principalStr) {
             try {
                 UUID userId = UUID.fromString(principalStr);

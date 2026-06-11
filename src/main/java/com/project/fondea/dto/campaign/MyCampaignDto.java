@@ -15,5 +15,6 @@ public record MyCampaignDto(
         LocalDate deadline,
         CampaignStatus status,
         int daysLeft,
-        BigDecimal availableToWithdraw  // neto después del 5%, solo si es SUCCESSFUL
+        BigDecimal availableToWithdraw,
+        String rejectionReason
 ) {}

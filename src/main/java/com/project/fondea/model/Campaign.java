@@ -68,6 +68,9 @@ public class Campaign {
     @Column
     private String imageUrl;
 
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }
