@@ -11,8 +11,10 @@ import com.project.fondea.exception.CampaignAlreadyReviewedException;
 import com.project.fondea.exception.EntityNotFoundException;
 import com.project.fondea.exception.UnauthorizedActionException;
 import com.project.fondea.model.Campaign;
+import com.project.fondea.model.CreatorProfile;
 import com.project.fondea.model.enums.CampaignStatus;
 import com.project.fondea.model.enums.PledgeStatus;
+import com.project.fondea.model.enums.Role;
 import com.project.fondea.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +38,7 @@ public class CampaignService {
     private final LocationRepository locationRepository;
     private final RewardRepository rewardRepository;
     private final CampaignFaqRepository faqRepository;
+    private final CreatorProfileRepository creatorProfileRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
 
@@ -49,6 +53,7 @@ public class CampaignService {
                 }).toList();
     }
 
+    @Transactional
     public CampaignCreatedDto create(UUID userId, RegisterCampaignRequest registerRequest) {
         var creator = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
@@ -58,6 +63,22 @@ public class CampaignService {
 
         var location = locationRepository.findById(registerRequest.locationId())
                 .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada"));
+
+        // Auto-promoción: un patrocinador que crea su primera campaña pasa a ser creador.
+        if (creator.getRole() == Role.SPONSOR) {
+            creator.setRole(Role.CREATOR);
+            userRepository.save(creator);
+
+            if (creatorProfileRepository.findByUserId(creator.getId()).isEmpty()) {
+                var profile = CreatorProfile.builder()
+                        .user(creator)
+                        .dailyWithdrawalLimit(new BigDecimal("500.00"))
+                        .totalWithdrawnToday(BigDecimal.ZERO)
+                        .isNewCreator(true)
+                        .build();
+                creatorProfileRepository.save(profile);
+            }
+        }
 
         var campaign = Campaign.builder()
                 .title(registerRequest.title())
@@ -70,6 +91,7 @@ public class CampaignService {
                 .creator(creator)
                 .category(category)
                 .location(location)
+                .city(registerRequest.city())
                 .build();
 
         return CampaignMapper.toCreated(campaignRepository.save(campaign));
