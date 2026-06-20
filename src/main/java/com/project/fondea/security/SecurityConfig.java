@@ -76,7 +76,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/locations/**").permitAll()
-
+                        // Exportacion csv
+                        .requestMatchers(HttpMethod.GET, "/api/export/campaigns/csv").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
