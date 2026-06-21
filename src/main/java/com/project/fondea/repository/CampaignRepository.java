@@ -49,4 +49,10 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID> {
 
     @Query("SELECT COUNT(p) FROM Pledge p WHERE p.campaign.id = :campaignId")
     int countPledgesByCampaignId(@Param("campaignId") UUID campaignId);
+
+    @Query("SELECT c FROM Campaign c " +
+            "LEFT JOIN FETCH c.creator " +
+            "LEFT JOIN FETCH c.category " +
+            "LEFT JOIN FETCH c.location")
+    List<Campaign> findAllForExport();
 }
