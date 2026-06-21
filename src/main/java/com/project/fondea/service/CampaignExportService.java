@@ -1,64 +1,33 @@
 package com.project.fondea.service;
 
-import com.project.fondea.model.enums.PledgeStatus;
-import com.project.fondea.repository.CampaignRepository;
-import com.project.fondea.repository.PledgeRepository;
+import com.project.fondea.export.CampaignExportDataProvider;
+import com.project.fondea.export.CampaignExporterRegistry;
+import com.project.fondea.export.ExportFormat;
+import com.project.fondea.export.ExportResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CampaignExportService {
 
-    private final CampaignRepository campaignRepository;
-    private final PledgeRepository pledgeRepository;
+    private final CampaignExportDataProvider dataProvider;
+    private final CampaignExporterRegistry exporterRegistry;
 
-    public String exportCampaignsToCsv() {
-        var campaigns = campaignRepository.findAll();
-
-        var csv = new StringBuilder();
-
-        csv.append("id,title,creator,category,location,goalAmount,pendingPledged,chargedPledged,totalPledged,pledgeCount,deadline,status,featuredScore\n");
-
-        campaigns.forEach(campaign -> {
-            var pendingPledged = sumPledges(campaign.getId(), PledgeStatus.PENDING);
-            var chargedPledged = sumPledges(campaign.getId(), PledgeStatus.CHARGED);
-            var totalPledged = pendingPledged.add(chargedPledged);
-
-            var pledgeCount = pledgeRepository.countByCampaignId(campaign.getId());
-
-            csv.append(campaign.getId()).append(",");
-            csv.append(escape(campaign.getTitle())).append(",");
-            csv.append(escape(campaign.getCreator().getName())).append(",");
-            csv.append(escape(campaign.getCategory() != null ? campaign.getCategory().getName() : "")).append(",");
-            csv.append(escape(campaign.getLocation() != null ? campaign.getLocation().getCity() : "")).append(",");
-            csv.append(campaign.getGoalAmount()).append(",");
-            csv.append(pendingPledged).append(",");
-            csv.append(chargedPledged).append(",");
-            csv.append(totalPledged).append(",");
-            csv.append(pledgeCount).append(",");
-            csv.append(campaign.getDeadline()).append(",");
-            csv.append(campaign.getStatus()).append(",");
-            csv.append(campaign.getFeaturedScore()).append("\n");
-        });
-
-        return csv.toString();
+    public ExportResult export(ExportFormat format) {
+        var rows = dataProvider.getRows();
+        return exporterRegistry.get(format).export(rows);
     }
 
-    private BigDecimal sumPledges(java.util.UUID campaignId, PledgeStatus status) {
-        return pledgeRepository.findByCampaignIdAndStatus(campaignId, status)
-                .stream()
-                .map(pledge -> pledge.getAmount() == null ? BigDecimal.ZERO : pledge.getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private String escape(String value) {
-        if (value == null) {
-            return "";
+    @Async
+    public void exportAsync(ExportFormat format) {
+        try {
+            export(format);
+        } catch (Exception e) {
+            log.error("Falló la exportación asíncrona a {}: {}", format, e.getMessage());
         }
-
-        return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 }

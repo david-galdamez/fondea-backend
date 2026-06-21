@@ -33,4 +33,11 @@ public interface PledgeRepository extends JpaRepository<Pledge, UUID> {
 
     @Query("SELECT COUNT(p) FROM Pledge p WHERE p.campaign.id = :campaignId")
     int countByCampaignId(@Param("campaignId") UUID campaignId);
+
+    @Query("""
+            SELECT p.campaign.id, p.status, COALESCE(SUM(p.amount), 0), COUNT(p)
+            FROM Pledge p
+            GROUP BY p.campaign.id, p.status
+            """)
+    List<Object[]> aggregateAmountsByCampaignAndStatus();
 }

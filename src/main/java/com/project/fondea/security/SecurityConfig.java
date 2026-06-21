@@ -78,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/locations/**").permitAll()
                         // Exportacion csv
                         .requestMatchers(HttpMethod.GET, "/api/export/campaigns/csv").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/export/campaigns/google-sheets").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
