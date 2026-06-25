@@ -41,10 +41,16 @@ public class AuthService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        user.setBio(request.bio());
-        user.setCountry(request.country());
         user.setName(request.name());
-        user.setCity(request.city());
+        if (request.city() != null) {
+            user.setCity(request.city());
+        }
+        if (request.country() != null) {
+            user.setCountry(request.country());
+        }
+        if (request.bio() != null) {
+            user.setBio(request.bio());
+        }
 
         userRepository.save(user);
 
