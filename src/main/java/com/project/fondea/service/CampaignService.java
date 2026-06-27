@@ -1,0 +1,330 @@
+package com.project.fondea.service;
+
+import com.project.fondea.dto.PageableResponse;
+import com.project.fondea.dto.campaign.*;
+import com.project.fondea.dto.faq.FaqMapper;
+import com.project.fondea.dto.pledge.CampaignPledgeDto;
+import com.project.fondea.dto.pledge.PledgeMapper;
+import com.project.fondea.dto.rewards.RewardsMapper;
+import com.project.fondea.exception.BusinessRuleException;
+import com.project.fondea.exception.CampaignAlreadyReviewedException;
+import com.project.fondea.exception.EntityNotFoundException;
+import com.project.fondea.exception.UnauthorizedActionException;
+import com.project.fondea.model.Campaign;
+import com.project.fondea.model.CreatorProfile;
+import com.project.fondea.model.enums.CampaignStatus;
+import com.project.fondea.model.enums.PledgeStatus;
+import com.project.fondea.model.enums.Role;
+import com.project.fondea.repository.*;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class CampaignService {
+    private final CampaignRepository campaignRepository;
+    private final WithdrawalRequestRepository withdrawalRequestRepository;
+    private final PledgeRepository pledgeRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final LocationRepository locationRepository;
+    private final RewardRepository rewardRepository;
+    private final CampaignFaqRepository faqRepository;
+    private final CreatorProfileRepository creatorProfileRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+
+    public List<CampaignSummaryDto> getAll() {
+        var campaigns = campaignRepository.findAll();
+
+        return campaigns.stream()
+                .map(campaign -> {
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaign.getId(), PledgeStatus.PENDING);
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
+                    return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
+                }).toList();
+    }
+
+    @Transactional
+    public CampaignCreatedDto create(UUID userId, RegisterCampaignRequest registerRequest) {
+        var creator = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        var category = categoryRepository.findById(registerRequest.categoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Categoria no encontrada"));
+
+        var location = locationRepository.findById(registerRequest.locationId())
+                .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada"));
+
+        // Auto-promoción: un patrocinador que crea su primera campaña pasa a ser creador.
+        if (creator.getRole() == Role.SPONSOR) {
+            creator.setRole(Role.CREATOR);
+            userRepository.save(creator);
+
+            if (creatorProfileRepository.findByUserId(creator.getId()).isEmpty()) {
+                var profile = CreatorProfile.builder()
+                        .user(creator)
+                        .dailyWithdrawalLimit(new BigDecimal("500.00"))
+                        .totalWithdrawnToday(BigDecimal.ZERO)
+                        .isNewCreator(true)
+                        .build();
+                creatorProfileRepository.save(profile);
+            }
+        }
+
+        var campaign = Campaign.builder()
+                .title(registerRequest.title())
+                .description(registerRequest.description())
+                .coverImageUrl(registerRequest.coverImageUrl())
+                .goalAmount(registerRequest.goalAmount())
+                .isFlexibleGoal(registerRequest.isFlexibleGoal())
+                .deadline(registerRequest.deadline())
+                .status(CampaignStatus.DRAFT)
+                .creator(creator)
+                .category(category)
+                .location(location)
+                .city(registerRequest.city())
+                .build();
+
+        return CampaignMapper.toCreated(campaignRepository.save(campaign));
+    }
+
+    public CampaignCreatedDto update(UUID campaignId, UUID userId, RegisterCampaignRequest registerRequest){
+
+        var creator = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+        var category = categoryRepository.findById(registerRequest.categoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Categoria no encontrada"));
+
+        var location = locationRepository.findById(registerRequest.locationId())
+                .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada"));
+
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campania no encontrada"));
+
+        if(!campaign.getCreator().getId().equals(creator.getId())) {
+            throw new BusinessRuleException("No eres duenio de esta campania");
+        }
+
+        campaign.setTitle(registerRequest.title());
+        campaign.setDescription(registerRequest.description());
+        campaign.setCategory(category);
+        campaign.setLocation(location);
+        campaign.setGoalAmount(registerRequest.goalAmount());
+        campaign.setDeadline(registerRequest.deadline());
+        campaign.setIsFlexibleGoal(registerRequest.isFlexibleGoal());
+        campaign.setCity(registerRequest.city());
+
+        return CampaignMapper.toCreated(campaignRepository.save(campaign));
+    }
+
+    public CampaignDetailDto getCampaignDetails(UUID campaignId) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
+        var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
+
+        var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
+                .stream()
+                .map(RewardsMapper::toRewardsSummary)
+                .toList();
+
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
+                .stream()
+                .map(FaqMapper::toDto)
+                .toList();
+
+        return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
+    }
+
+    public List<MyCampaignDto> getCampaignsByUserId(UUID userId) {
+        return campaignRepository.findByCreatorId(userId)
+                .stream()
+                .map(campaign -> {
+                    var totalPledged = campaignRepository.sumActivePledgesByCampaignId(
+                            campaign.getId());
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(
+                            campaign.getId());
+                    var committed = withdrawalRequestRepository
+                            .sumCommittedByCampaignId(campaign.getId());
+                    return CampaignMapper.toMyCampaign(campaign, totalPledged, pledgeCount, committed);
+                })
+                .toList();
+    }
+    public List<CampaignDraftDto> getDraftedCampaigns(UUID userId) {
+        return campaignRepository.findByCreatorIdAndStatus(userId, CampaignStatus.DRAFT)
+                .stream()
+                .map(CampaignMapper::toDraft)
+                .toList();
+    }
+
+    public List<CampaignSummaryDto> getFeatured(int limit) {
+        return campaignRepository.findByStatusOrderByFeaturedScoreDesc(CampaignStatus.ACTIVE, Limit.of(limit))
+                .stream()
+                .map(campaign -> {
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaign.getId(), PledgeStatus.PENDING);
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
+                    return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
+                })
+                .toList();
+    }
+
+    public List<CampaignSummaryDto> search(UUID categoryId, UUID locationId, String keyword) {
+
+        List<Campaign> campaigns;
+
+        if (keyword != null && !keyword.isBlank()) {
+            campaigns = campaignRepository.searchByKeyword(keyword);
+        } else if (categoryId != null && locationId != null) {
+            campaigns = campaignRepository.findByCategoryIdAndLocationId(categoryId, locationId);
+        } else if (categoryId != null) {
+            campaigns = campaignRepository.findByCategoryId(categoryId);
+        } else if (locationId != null) {
+            campaigns = campaignRepository.findByLocationId(locationId);
+        } else {
+            campaigns = campaignRepository.findByStatus(CampaignStatus.ACTIVE);
+        }
+
+        return campaigns.stream()
+                .map(campaign -> {
+                    var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(
+                            campaign.getId(), PledgeStatus.PENDING);
+                    var pledgeCount = campaignRepository.countPledgesByCampaignId(campaign.getId());
+                    return CampaignMapper.toSummary(campaign, totalPledged, pledgeCount);
+                })
+                .toList();
+    }
+
+    public List<CampaignReviewDto> findPendingReview() {
+        return campaignRepository.findByStatus(CampaignStatus.UNDER_REVIEW)
+                .stream()
+                .map(CampaignMapper::toReview)
+                .toList();
+    }
+
+    public void sendForReview(UUID campaignId, UUID userId) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        if (!campaign.getCreator().getId().equals(userId)) {
+            throw new UnauthorizedActionException("No eres el creador de la campaña");
+        }
+
+        if (campaign.getStatus() != CampaignStatus.DRAFT) {
+            throw new CampaignAlreadyReviewedException(campaignId);
+        }
+
+        campaign.setStatus(CampaignStatus.UNDER_REVIEW);
+        campaignRepository.save(campaign);
+    }
+
+    @Transactional
+    public CampaignDetailDto approve(UUID campaignId) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        if (campaign.getStatus() != CampaignStatus.UNDER_REVIEW) {
+            throw new CampaignAlreadyReviewedException(campaignId);
+        }
+
+        campaign.setStatus(CampaignStatus.ACTIVE);
+        var saved = campaignRepository.save(campaign);
+
+        emailService.sendCampaignApproved(campaign.getCreator(), campaign);
+
+        notificationService.create(
+                campaign.getCreator(),
+                campaign,
+                com.project.fondea.model.enums.NotificationType.CAMPAIGN_APPROVED,
+                "Tu campaña '" + campaign.getTitle() + "' fue aprobada y ya está activa."
+        );
+
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
+        var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
+
+        var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
+                .stream()
+                .map(RewardsMapper::toRewardsSummary)
+                .toList();
+
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
+                .stream()
+                .map(FaqMapper::toDto)
+                .toList();
+
+        return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
+    }
+
+    @Transactional
+    public CampaignDetailDto reject(UUID campaignId, String rejectionReason) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        if (campaign.getStatus() != CampaignStatus.UNDER_REVIEW) {
+            throw new CampaignAlreadyReviewedException(campaignId);
+        }
+
+        campaign.setStatus(CampaignStatus.DRAFT);
+        campaign.setRejectionReason(rejectionReason);
+        var saved = campaignRepository.save(campaign);
+
+        emailService.sendCampaignRejected(campaign.getCreator(), campaign);
+
+        notificationService.create(
+                campaign.getCreator(),
+                campaign,
+                com.project.fondea.model.enums.NotificationType.CAMPAIGN_REJECTED,
+                "Tu campaña '" + campaign.getTitle() + "' fue rechazada" +
+                        (rejectionReason != null ? ": " + rejectionReason : ".")
+        );
+
+        var totalPledged = campaignRepository.sumPledgesByCampaignIdAndStatus(campaignId, PledgeStatus.PENDING);
+        var pledgeCount = campaignRepository.countPledgesByCampaignId(campaignId);
+
+        var rewards = rewardRepository.findAvailableRewardsByCampaignId(campaignId)
+                .stream()
+                .map(RewardsMapper::toRewardsSummary)
+                .toList();
+
+        var faqs = faqRepository.findByCampaignIdAndAnswerIsNotNullOrderByAskedAtDesc(campaignId)
+                .stream()
+                .map(FaqMapper::toDto)
+                .toList();
+
+        return CampaignMapper.toDetail(campaign, totalPledged, pledgeCount, rewards, faqs);
+    }
+
+    public PageableResponse<CampaignPledgeDto> getByCampaign(UUID campaignId,
+                                                             UUID creatorId,
+                                                             int page,
+                                                             int size) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new EntityNotFoundException("Campaña no encontrada"));
+
+        if (!campaign.getCreator().getId().equals(creatorId)) {
+            throw new UnauthorizedActionException("No eres el creador de esta campaña");
+        }
+
+        var pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+        var pledgePage = pledgeRepository.findByCampaignId(campaignId, pageable);
+
+        return new PageableResponse<>(
+                pledgePage.getContent().stream().map(PledgeMapper::toCampaignPledge).toList(),
+                page,
+                size,
+                pledgePage.getTotalElements(),
+                pledgePage.getTotalPages(),
+                pledgePage.isLast()
+        );
+    }
+}
