@@ -2,6 +2,7 @@ package com.project.fondea.security;
 
 import com.project.fondea.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -26,6 +28,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -90,12 +95,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         var configuration = new CorsConfiguration();
 
-        // Orígenes permitidos — en desarrollo tu frontend local
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",   // Vite
-                "http://localhost:3000",   // React/Next
-                "http://localhost:4200"    // Angular
-        ));
+        // Orígenes permitidos — configurables vía CORS_ALLOWED_ORIGINS
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList());
 
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(List.of(
