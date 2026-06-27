@@ -8,7 +8,7 @@
 
 1. Copiar archivo de variables de entorno:
    ```bash
-   cp ..env.example ..env
+   cp .env.example .env
    ```
 
 2. Editar `.env` con las credenciales deseadas
