@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class EmailService {
     @Value("${app.mail.from}")
     private String from;
 
+    @Async
     public void sendUpdateToSponsors(List<User> sponsors, Campaign campaign, CampaignUpdate update) {
         sponsors.forEach(sponsor -> sendEmail(
                 sponsor.getEmail(),
@@ -32,6 +34,7 @@ public class EmailService {
         ));
     }
 
+    @Async
     public void sendCampaignApproved(User creator, Campaign campaign) {
         sendEmail(
                 creator.getEmail(),
@@ -41,6 +44,7 @@ public class EmailService {
         );
     }
 
+    @Async
     public void sendCampaignRejected(User creator, Campaign campaign) {
         sendEmail(
                 creator.getEmail(),
@@ -50,6 +54,7 @@ public class EmailService {
         );
     }
 
+    @Async
     public void sendVerificationEmail(User user, String verificationCode) {
         sendEmail(
                 user.getEmail(),
@@ -59,6 +64,7 @@ public class EmailService {
         );
     }
 
+    @Async
     public void sendNearGoalNotification(User sponsor, Campaign campaign) {
         sendEmail(
                 sponsor.getEmail(),

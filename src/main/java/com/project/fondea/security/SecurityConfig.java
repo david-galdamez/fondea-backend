@@ -57,7 +57,7 @@ public class SecurityConfig {
                         // ── Creador — rutas específicas ANTES del wildcard público
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/mine").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/drafts").hasRole("CREATOR")
-                        .requestMatchers(HttpMethod.POST, "/api/campaigns").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/campaigns").hasAnyRole("CREATOR", "SPONSOR")
                         .requestMatchers(HttpMethod.POST, "/api/campaigns/*/submit").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/campaigns/*/updates").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/campaigns/*/faqs/manage").hasRole("CREATOR")

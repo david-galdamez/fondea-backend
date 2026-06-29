@@ -10,8 +10,29 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 public class CampaignMapper {
+
+    private static String categoryName(Campaign campaign) {
+        return campaign.getCategory() != null ? campaign.getCategory().getName() : null;
+    }
+
+    private static UUID categoryId(Campaign campaign) {
+        return campaign.getCategory() != null ? campaign.getCategory().getId() : null;
+    }
+
+    private static String locationCountry(Campaign campaign) {
+        return campaign.getLocation() != null ? campaign.getLocation().getCountry() : null;
+    }
+
+    private static String locationCity(Campaign campaign) {
+        return campaign.getLocation() != null ? campaign.getLocation().getCity() : null;
+    }
+
+    private static UUID locationId(Campaign campaign) {
+        return campaign.getLocation() != null ? campaign.getLocation().getId() : null;
+    }
     public static CampaignSummaryDto toSummary(Campaign campaign, BigDecimal totalPledged, int pledgeCount) {
 
         boolean featured = campaign.getFeaturedScore() != null && campaign.getFeaturedScore() > 0;
@@ -25,9 +46,9 @@ public class CampaignMapper {
                 totalPledged,
                 pledgeCount,
                 campaign.getDeadline(),
-                campaign.getCategory().getName(),
+                categoryName(campaign),
                 campaign.getCity(),
-                campaign.getLocation().getCountry(),
+                locationCountry(campaign),
                 campaign.getStatus(),
                 campaign.getFeaturedScore(),
                 featured
@@ -56,9 +77,9 @@ public class CampaignMapper {
                 campaign.getCreatedAt(),
                 campaign.getIsFlexibleGoal(),
                 campaign.getStatus(),
-                campaign.getCategory().getId(),
-                campaign.getLocation().getId(),
-                campaign.getLocation().getCountry(),
+                categoryId(campaign),
+                locationId(campaign),
+                locationCountry(campaign),
                 campaign.getCity(),
                 rewards,
                 faqs,
@@ -112,8 +133,8 @@ public class CampaignMapper {
                 campaign.getGoalAmount(),
                 campaign.getIsFlexibleGoal(),
                 campaign.getDeadline(),
-                campaign.getCategory().getName(),
-                campaign.getLocation().getCity(),
+                categoryName(campaign),
+                locationCity(campaign),
                 campaign.getCreatedAt(),
                 campaign.getRejectionReason()
         );
